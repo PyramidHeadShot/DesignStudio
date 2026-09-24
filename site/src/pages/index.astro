@@ -1,0 +1,31 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+
+const cases = (await getCollection('cases')).sort(
+  (a, b) => a.data.order - b.data.order || b.data.year - a.data.year,
+);
+---
+
+<Base title="DesignStudio — работы">
+  <section class="hero">
+    <h1>Работы, а не слова.</h1>
+    <!-- TODO: формулировка героя — согласовать с пользователем; принцип show-don't-tell -->
+    <p>Портфолио дизайн-студии. Минимализм, типографика, смысл.</p>
+  </section>
+
+  <section aria-label="Портфолио">
+    <div class="work-grid">
+      {cases.map((c) => (
+        <a class="work-card" href={`/cases/${c.id}/`}>
+          <figure style="margin:0">
+            <div class="ph">{c.data.cover ? '' : 'плейсхолдер'}</div>
+            <figcaption>
+              {c.data.title} <span>— {c.data.category}, {c.data.year}</span>
+            </figcaption>
+          </figure>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

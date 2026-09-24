@@ -1,0 +1,16 @@
+.env
+.pi/sessions/
+УСТАНОВКА/*.exe
+УСТАНОВКА/*.msi
+УСТАНОВКА/*.zip
+.idea/
+.tmp/
+*.log
+.DS_Store
+Thumbs.db
+.pi/sessions-archive/
+
+# Сайт (site/)
+site/node_modules/
+site/dist/
+site/.astro/

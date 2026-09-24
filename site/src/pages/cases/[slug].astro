@@ -1,0 +1,23 @@
+---
+import { getCollection, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+
+export async function getStaticPaths() {
+  const cases = await getCollection('cases');
+  return cases.map((c) => ({ params: { slug: c.id }, props: { entry: c } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+---
+
+<Base title={`${entry.data.title} — DesignStudio`}>
+  <article class="container">
+    <h1>{entry.data.title}</h1>
+    <p style="color:var(--muted)">
+      {entry.data.client ?? '?'} · {entry.data.category} · {entry.data.year}
+    </p>
+    <!-- TODO: обложка кейса через astro:assets, когда появятся реальные изображения -->
+    <Content />
+  </article>
+</Base>
