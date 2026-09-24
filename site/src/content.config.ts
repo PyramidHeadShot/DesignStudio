@@ -7,7 +7,7 @@ const cases = defineCollection({
   schema: z.object({
     title: z.string(),
     client: z.string().optional(),
-    year: z.number(),
+    year: z.number().optional(), // pentagram год не публикует — для тест-данных не указываем
     category: z.string(),
     cover: z.string().optional(),
     featured: z.boolean().default(false),

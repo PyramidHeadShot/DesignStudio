@@ -4,7 +4,7 @@ import Base from '../layouts/Base.astro';
 import { SITE } from '../config';
 
 const cases = (await getCollection('cases')).sort(
-  (a, b) => a.data.order - b.data.order || b.data.year - a.data.year,
+  (a, b) => a.data.order - b.data.order,
 );
 ---
 
@@ -24,7 +24,7 @@ const cases = (await getCollection('cases')).sort(
               {c.data.cover ? <img src={c.data.cover} alt={c.data.title} loading="lazy" decoding="async" /> : <div class="ph">плейсхолдер</div>}
             </div>
             <figcaption>
-              {c.data.title} <span>— {c.data.category}, {c.data.year}</span>
+              {c.data.title} <span>— {c.data.category}{c.data.year ? `, ${c.data.year}` : ''}</span>
             </figcaption>
           </figure>
         </a>

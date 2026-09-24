@@ -15,7 +15,7 @@ const { Content } = await render(entry);
   <article class="container">
     <h1>{entry.data.title}</h1>
     <p style="color:var(--muted)">
-      {entry.data.client ?? '?'} · {entry.data.category} · {entry.data.year}
+      {entry.data.client ?? '?'} · {entry.data.category}{entry.data.year ? ` · ${entry.data.year}` : ''}
     </p>
     <!-- TODO: обложка кейса через astro:assets, когда появятся реальные изображения -->
     <Content />
