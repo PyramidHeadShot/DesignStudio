@@ -1,6 +1,7 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
+import { SITE } from '../config';
 
 const cases = (await getCollection('cases')).sort(
   (a, b) => a.data.order - b.data.order || b.data.year - a.data.year,
@@ -9,9 +10,9 @@ const cases = (await getCollection('cases')).sort(
 
 <Base title="DesignStudio — работы">
   <section class="hero">
-    <h1>Работы, а не слова.</h1>
-    <!-- TODO: формулировка героя — согласовать с пользователем; принцип show-don't-tell -->
-    <p>Портфолио дизайн-студии. Минимализм, типографика, смысл.</p>
+    <h1>{SITE.heroTitle}</h1>
+    <!-- ЗАГЛУШКА из SITE.heroText; принцип show-don't-tell (design-principles.md п.1) -->
+    <p>{SITE.heroText}</p>
   </section>
 
   <section aria-label="Портфолио">
@@ -19,7 +20,9 @@ const cases = (await getCollection('cases')).sort(
       {cases.map((c) => (
         <a class="work-card" href={`/cases/${c.id}/`}>
           <figure style="margin:0">
-            <div class="ph">{c.data.cover ? '' : 'плейсхолдер'}</div>
+            <div class="thumb">
+              {c.data.cover ? <img src={c.data.cover} alt={c.data.title} loading="lazy" decoding="async" /> : <div class="ph">плейсхолдер</div>}
+            </div>
             <figcaption>
               {c.data.title} <span>— {c.data.category}, {c.data.year}</span>
             </figcaption>

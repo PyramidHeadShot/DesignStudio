@@ -48,18 +48,18 @@ a:hover { color: var(--accent); }
 /* Портфолио-сетка: CSS Grid, плотная, как у референса */
 .work-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 4px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); /* auto-fit: пустые треки схлопываются */
+  gap: 32px 4px;
   padding: 0 var(--pad);
 }
-.work-card {
-  display: block;
+.work-card { display: block; }
+.thumb {
+  position: relative;
   aspect-ratio: 4 / 3;
   background: #f2f2f2; /* плейсхолдер до загрузки реальных работ */
-  position: relative;
   overflow: hidden;
 }
-.work-card img, .work-card .ph {
+.thumb img, .thumb .ph {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -71,9 +71,9 @@ a:hover { color: var(--accent); }
   color: var(--muted);
   transition: transform 0.35s ease; /* subtle animation: только hover */
 }
-.work-card:hover img, .work-card:hover .ph { transform: scale(1.03); }
+.work-card:hover .thumb img, .work-card:hover .thumb .ph { transform: scale(1.03); }
 .work-card figcaption {
-  padding: 8px 2px;
+  padding: 8px 0 0;
   font-size: 13px;
 }
 .work-card figcaption span { color: var(--muted); }
