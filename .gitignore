@@ -14,3 +14,4 @@ Thumbs.db
 site/node_modules/
 site/dist/
 site/.astro/
+__pycache__/
