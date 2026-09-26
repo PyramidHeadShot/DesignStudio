@@ -3,9 +3,14 @@ title: 'Behold Wildlife Camera'
 client: 'Behold'
 category: 'Product Design'
 order: 4
+cover: './behold-wildlife-camera.jpg'
 ---
 
-{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/behold-wildlife-camera. Заменить реальным кейсом. */}
+import { Image } from 'astro:assets';
+import p1 from './behold-wildlife-camera-p1.jpg';
+import p2 from './behold-wildlife-camera-p2.jpg';
+
+{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/behold-wildlife-camera. Заменить реальным кейсом (план ~20 кейсов). */}
 
 ## Задача
 
@@ -16,6 +21,9 @@ order: 4
 
 Дисциплины: Industrial/Product Design.
 Партнёр — Jon Marshall, офис Pentagram в Лондоне.
+
+<Image src={p1} alt="Олень в горном лесу" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
+<Image src={p2} alt="Ландшафт заказника — среда обитания животных" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
 
 ## Результат
 

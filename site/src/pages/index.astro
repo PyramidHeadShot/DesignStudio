@@ -1,11 +1,16 @@
 ---
 import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import { SITE } from '../config';
 
 const cases = (await getCollection('cases')).sort(
   (a, b) => a.data.order - b.data.order,
 );
+// Категории (дисциплины) в порядке первых вхождений — для строки фильтров
+const categories = [...new Set(cases.map((c) => c.data.category))];
+// BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio)
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <Base title="DesignStudio — работы">
@@ -16,12 +21,31 @@ const cases = (await getCollection('cases')).sort(
   </section>
 
   <section aria-label="Портфолио">
+    {/* Фильтр — island; без JS скрыт (см. CSS), сетка показана полностью */}
+    <div class="work-filters" role="group" aria-label="Фильтр работ по дисциплинам">
+      <button type="button" class="work-filter" data-category="all" aria-pressed="true">Все</button>
+      {categories.map((cat) => (
+        <button type="button" class="work-filter" data-category={cat} aria-pressed="false">{cat}</button>
+      ))}
+    </div>
     <div class="work-grid">
-      {cases.map((c) => (
-        <a class="work-card" href={`/cases/${c.id}/`}>
+      {cases.map((c, i) => (
+        <a class="work-card" href={`${base}/cases/${c.id}/`} data-category={c.data.category}>
           <figure style="margin:0">
             <div class="thumb">
-              {c.data.cover ? <img src={c.data.cover} alt={c.data.title} loading="lazy" decoding="async" /> : <div class="ph">плейсхолдер</div>}
+              {c.data.cover ? (
+                <Image
+                  src={c.data.cover}
+                  alt={`${c.data.title} — обложка кейса`}
+                  widths={[400, 640, 960]}
+                  sizes="(max-width: 360px) 100vw, 340px"
+                  loading={i < 3 ? 'eager' : 'lazy'}
+                  fetchpriority={i < 3 ? 'high' : 'auto'}
+                  decoding="async"
+                />
+              ) : (
+                <div class="ph">плейсхолдер</div>
+              )}
             </div>
             <figcaption>
               {c.data.title} <span>— {c.data.category}{c.data.year ? `, ${c.data.year}` : ''}</span>
@@ -31,4 +55,43 @@ const cases = (await getCollection('cases')).sort(
       ))}
     </div>
   </section>
+
+  <script>
+    // Scroll-reveal карточек: включаем скрытие только после подтверждения JS
+    // (класс на <html>) — без JS сетка полностью видна (progressive enhancement).
+    document.documentElement.classList.add('js');
+    const cards = document.querySelectorAll('.work-card');
+    if (!('IntersectionObserver' in window)) {
+      cards.forEach((c) => c.classList.add('is-visible'));
+    } else {
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add('is-visible');
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { threshold: 0.15 },
+      );
+      cards.forEach((c, i) => {
+        (c as HTMLElement).style.transitionDelay = `${Math.min(i * 60, 360)}ms`;
+        io.observe(c);
+      });
+    }
+
+    // Фильтр сетки по дисциплинам: скрытие/показ только по клику —
+    // без JS карточки никогда не скрываются (full grid по умолчанию)
+    const filters = document.querySelectorAll<HTMLButtonElement>('.work-filter');
+    filters.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const cat = btn.dataset.category ?? 'all';
+        filters.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+        cards.forEach((card) => {
+          (card as HTMLElement).hidden = cat !== 'all' && card.dataset.category !== cat;
+        });
+      });
+    });
+  </script>
 </Base>

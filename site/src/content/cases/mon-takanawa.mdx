@@ -2,9 +2,14 @@
 title: 'MoN Takanawa: The Museum of Narratives'
 category: 'Brand Identity'
 order: 5
+cover: './mon-takanawa.jpg'
 ---
 
-{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/mon-takanawa-the-museum-of-narratives. Заменить реальным кейсом. */}
+import { Image } from 'astro:assets';
+import p1 from './mon-takanawa-p1.jpg';
+import p2 from './mon-takanawa-p2.jpg';
+
+{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/mon-takanawa. Заменить реальным кейсом (план ~20 кейсов). */}
 
 ## Задача
 
@@ -16,6 +21,9 @@ order: 5
 Дисциплины: Brand Identity, Signage & Environmental Graphics, Brand Strategy,
 Naming, Verbal Identity. Партнёры — Luke Powell и Jody Hudson-Powell,
 офис Pentagram в Лондоне.
+
+<Image src={p1} alt="Перекрёсток Сибуи в Токио ночью" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
+<Image src={p2} alt="Галерейный интерьер музея" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
 
 ## Результат
 

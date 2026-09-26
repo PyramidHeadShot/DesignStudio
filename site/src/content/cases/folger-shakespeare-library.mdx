@@ -3,9 +3,14 @@ title: 'Folger Shakespeare Library'
 client: 'Folger Shakespeare Library'
 category: 'Signage & Environment'
 order: 3
+cover: './folger-shakespeare-library.jpg'
 ---
 
-{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/folger-shakespeare-library. Заменить реальным кейсом. */}
+import { Image } from 'astro:assets';
+import p1 from './folger-shakespeare-library-p1.jpg';
+import p2 from './folger-shakespeare-library-p2.jpg';
+
+{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/folger-shakespeare-library. Заменить реальным кейсом (план ~20 кейсов). */}
 
 ## Задача
 
@@ -16,6 +21,9 @@ order: 3
 
 Дисциплины: Brand Identity, Signage & Environmental Graphics.
 Партнёр — Abbott Miller, офис Pentagram в Нью-Йорке.
+
+<Image src={p1} alt="Портрет Шекспира работы Дроушаута, 1623" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
+<Image src={p2} alt="Читальный зал крупной библиотеки" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
 
 ## Результат
 

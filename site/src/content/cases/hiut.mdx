@@ -3,7 +3,12 @@ title: 'Hiut'
 client: 'HIUT'
 category: 'Brand Identity'
 order: 1
+cover: './hiut.jpg'
 ---
+
+import { Image } from 'astro:assets';
+import p1 from './hiut-p1.jpg';
+import p2 from './hiut-p2.jpg';
 
 {/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/hiut. Заменить реальным кейсом (план ~20 кейсов). */}
 
@@ -16,6 +21,9 @@ order: 1
 
 Дисциплины: Brand Identity, Campaigns.
 Партнёр — Hugh Miller, офис Pentagram в Лондоне.
+
+<Image src={p1} alt="Фактура денима крупным планом" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
+<Image src={p2} alt="Катушка швейных ниток в мастерской" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
 
 ## Результат
 

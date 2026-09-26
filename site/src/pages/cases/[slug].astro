@@ -1,5 +1,6 @@
 ---
 import { getCollection, render } from 'astro:content';
+import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 
 export async function getStaticPaths() {
@@ -12,12 +13,26 @@ const { Content } = await render(entry);
 ---
 
 <Base title={`${entry.data.title} — DesignStudio`}>
-  <article class="container">
-    <h1>{entry.data.title}</h1>
-    <p style="color:var(--muted)">
-      {entry.data.client ?? '?'} · {entry.data.category}{entry.data.year ? ` · ${entry.data.year}` : ''}
-    </p>
-    <!-- TODO: обложка кейса через astro:assets, когда появятся реальные изображения -->
-    <Content />
+  <article class="container case">
+    <header class="case-head">
+      <h1>{entry.data.title}</h1>
+      <p style="color:var(--muted)">
+        {entry.data.client ?? '?'} · {entry.data.category}{entry.data.year ? ` · ${entry.data.year}` : ''}
+      </p>
+    </header>
+    {entry.data.cover && (
+      <Image
+        class="case-hero"
+        src={entry.data.cover}
+        alt={`${entry.data.title} — обложка кейса`}
+        widths={[800, 1200, 1600]}
+        sizes="(min-width: 900px) 860px, 100vw"
+        loading="eager"
+        decoding="async"
+      />
+    )}
+    <div class="case-body">
+      <Content />
+    </div>
   </article>
 </Base>

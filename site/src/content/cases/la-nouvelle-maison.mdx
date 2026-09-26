@@ -3,9 +3,14 @@ title: 'La Nouvelle Maison'
 client: 'Prestel Publishing'
 category: 'Editorial'
 order: 6
+cover: './la-nouvelle-maison.jpg'
 ---
 
-{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/la-nouvelle-maison. Заменить реальным кейсом. */}
+import { Image } from 'astro:assets';
+import p1 from './la-nouvelle-maison-p1.jpg';
+import p2 from './la-nouvelle-maison-p2.jpg';
+
+{/* ТЕСТ-ДАННЫЕ: факты с pentagram.com/work/la-nouvelle-maison. Заменить реальным кейсом (план ~20 кейсов). */}
 
 ## Задача
 
@@ -16,6 +21,9 @@ order: 6
 
 Дисциплина: Books.
 Партнёр — Justus Oehler, офис Pentagram в Берлине.
+
+<Image src={p1} alt="Старый печатный пресс" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
+<Image src={p2} alt="Эскиз предметного дизайна из архива" widths={[640, 960, 1280]} sizes="(min-width: 900px) 860px, 100vw" loading="lazy" decoding="async" />
 
 ## Результат
 

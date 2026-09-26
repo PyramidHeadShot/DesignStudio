@@ -1,10 +1,13 @@
 ---
 import '../styles/global.css';
+import cyrFont from '../assets/fonts/inter-tight-cyrillic.woff2?url';
 import { SITE } from '../config';
 
 interface Props { title?: string; }
 const { title = SITE.name } = Astro.props;
 const year = new Date().getFullYear();
+// BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio); нормализуем слэш
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <!doctype html>
@@ -14,13 +17,15 @@ const year = new Date().getFullYear();
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={SITE.heroText} />
+    <!-- preload основного subset'а (кириллица — язык сайта) -->
+    <link rel="preload" as="font" type="font/woff2" href={cyrFont} crossorigin />
   </head>
   <body>
     <header class="site-header">
-      <a class="logo" href="/">{SITE.name}</a>
+      <a class="logo" href={`${base}/`}>{SITE.name}</a>
       <nav class="site-nav" aria-label="Основная навигация">
-        <a href="/">Работы</a>
-        <a href="/#contact">Контакты</a>
+        <a href={`${base}/`}>Работы</a>
+        <a href={`${base}/#contact`}>Контакты</a>
       </nav>
     </header>
     <main>
