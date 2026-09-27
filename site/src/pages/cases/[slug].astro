@@ -105,27 +105,47 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     // --- Волна Q: «буквы-дождик» (демо №06) — посимвольные маски. Техника — CSS
     // transitions (паттерн logo-волны): anime.js ради 12-40 букв не тянем.
     // Только буквы/цифры маскируются, знаки препинания/кавычки — на местах.
+    // Волна R (мобилка): слова собираются в .cword (nowrap) — перенос только
+    // по пробелам, посреди слова строка не рвётся на 320–420px.
     const splitChars = (el: HTMLElement) => {
       const text = el.textContent ?? '';
       el.setAttribute('aria-label', text.trim());
       el.textContent = '';
       const chars: HTMLElement[] = [];
+      let word: HTMLElement | null = null;
       let i = 0;
+      const addChar = (ch: string) => {
+        const w = document.createElement('span');
+        w.className = 'cw';
+        w.setAttribute('aria-hidden', 'true');
+        const c = document.createElement('span');
+        c.className = 'ci';
+        c.textContent = ch;
+        c.style.transitionDelay = `${i * 30}ms`; // stagger 30 мс
+        w.appendChild(c);
+        word!.appendChild(w);
+        chars.push(c);
+        i++;
+      };
       for (const ch of [...text]) {
-        if (/[\p{L}\p{N}]/u.test(ch)) {
-          const w = document.createElement('span');
-          w.className = 'cw';
-          w.setAttribute('aria-hidden', 'true');
-          const c = document.createElement('span');
-          c.className = 'ci';
-          c.textContent = ch;
-          c.style.transitionDelay = `${i * 30}ms`; // stagger 30 мс
-          w.appendChild(c);
-          el.appendChild(w);
-          chars.push(c);
-          i++;
-        } else {
+        if (/\s/.test(ch)) {
+          word = null; // пробел — текстовый узел, перенос разрешён только здесь
           el.appendChild(document.createTextNode(ch));
+          continue;
+        }
+        if (!word) {
+          word = document.createElement('span');
+          word.className = 'cword';
+          word.setAttribute('aria-hidden', 'true');
+          el.appendChild(word);
+        }
+        if (/[\p{L}\p{N}]/u.test(ch)) addChar(ch);
+        else {
+          // знак препинания/кавычка — на месте, без маски, прилипает к слову
+          const s = document.createElement('span');
+          s.setAttribute('aria-hidden', 'true');
+          s.textContent = ch;
+          word.appendChild(s);
         }
       }
       return chars;

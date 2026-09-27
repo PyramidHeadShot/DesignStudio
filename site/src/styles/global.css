@@ -506,3 +506,11 @@ a:focus-visible, .work-filter:focus-visible { outline: 2px solid var(--accent); 
   clip-path: inset(50%);
   white-space: nowrap;
 }
+
+/* --- Волна R: мобильный проход 375px + tap-зоны --- */
+.cword { display: inline-block; white-space: nowrap; } /* буквы-дождик: перенос только по словам */
+@media (pointer: coarse) {
+  /* tap-зоны ≥ 40px (фильтр главной); десктоп не затронут */
+  .work-filter { padding: 10px 0; }
+}
+.biglink { padding: 6px 0; } /* 404: tap-зона ссылки ≥ 40px */
