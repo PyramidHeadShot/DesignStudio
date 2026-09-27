@@ -413,3 +413,54 @@ a:focus-visible, .work-filter:focus-visible { outline: 2px solid var(--accent); 
   html.js .site-footer { opacity: 1; transform: none; }
   html.js .site-footer:not(.is-in) .rule line { stroke-dashoffset: 0; }
 }
+
+/* --- Волна O: страница 404 (почти брутализм) --- */
+.p404 { padding: calc(var(--pad) * 1.5) var(--pad) calc(var(--pad) * 2); }
+.row404 { display: flex; align-items: center; gap: clamp(20px, 6vw, 56px); flex-wrap: wrap; }
+.code404 {
+  margin: 0;
+  font-size: clamp(96px, 22vw, 280px);
+  font-weight: 700;
+  line-height: 0.85;
+  letter-spacing: -0.05em;
+  color: var(--color-ink);
+}
+.morph404 { flex: none; }
+.m-still { display: none; } /* статичный дубль фигуры — только для reduce */
+.k404 {
+  margin: clamp(16px, 4vw, 40px) 0 0;
+  font-size: clamp(28px, 5vw, 56px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  line-height: 1.15; /* фикс: маски-слова не меняют высоту строк (CLS 0) */
+}
+.hint404 { margin: 12px 0 0; max-width: 46ch; color: var(--color-ink-muted); }
+.act404 { margin: 28px 0 0; }
+.biglink {
+  position: relative;
+  display: inline-block;
+  font-size: clamp(18px, 3vw, 24px);
+  font-weight: 600;
+  color: var(--color-accent-strong);
+}
+.biglink:hover { color: var(--color-accent); }
+.biglink .ul404 { display: block; width: 100%; height: 4px; margin-top: 5px; overflow: visible; }
+.ul404 line { stroke: var(--color-accent); stroke-width: 2.5; stroke-dasharray: 100; stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  /* кинетика маски-слов (триггер .is-in из inline-скрипта 404; без JS — видно) */
+  html.js .k404 .wi {
+    opacity: 0;
+    transform: translateY(110%);
+    transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.4s ease;
+  }
+  html.js .k404.is-in .wi { opacity: 1; transform: none; }
+  html.js .k404 .w:nth-child(2) .wi { transition-delay: 80ms; }
+  html.js .k404 .w:nth-child(3) .wi { transition-delay: 160ms; }
+  /* повторная прорисовка подчёркивания при наведении */
+  @keyframes ul404-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+  .biglink:hover .ul404 line { animation: ul404-draw 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .m-live { display: none; } /* морфинг стоит: показываем статичный круг */
+  .m-still { display: block; }
+}

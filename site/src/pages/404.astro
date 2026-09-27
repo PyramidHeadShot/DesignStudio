@@ -1,0 +1,79 @@
+---
+// Волна O: фирменная 404 в стиле студии (почти брутализм, палитра волны F).
+// Base-шапка/футер; кинетика заголовка — маски-слова (.w/.wi, как hero главной,
+// класс-триггер .is-in); морфинг фигуры — SMIL (0 JS, 0 веса); noindex через
+// head-слот Base. Ссылка «На главную» — обычный переход (ClientRouter совместим).
+import Base from '../layouts/Base.astro';
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+---
+
+<Base title="404 — Страница не найдена">
+  <Fragment slot="head">
+    <meta name="robots" content="noindex" />
+  </Fragment>
+
+  <section class="p404">
+    <div class="row404">
+      <p class="code404" aria-hidden="true">404</p>
+      <!-- Волна O: морфинг круг ↔ скруглённый квадрат (адаптация демо №14).
+           SMIL <animate d>: оба пути с одинаковой структурой команд (M + 4C + Z),
+           бесшовный loop 7 с; при reduce фигура-побратим .m-still (статичный круг) -->
+      <svg class="morph404" viewBox="0 0 120 120" width="128" height="128" aria-hidden="true">
+        <path
+          class="m-live"
+          fill="none"
+          stroke="var(--color-accent)"
+          stroke-width="3"
+          stroke-linecap="round"
+          d="M 60 12 C 86.5 12 108 33.5 108 60 C 108 86.5 86.5 108 60 108 C 33.5 108 12 86.5 12 60 C 12 33.5 33.5 12 60 12 Z"
+        >
+          <animate
+            attributeName="d"
+            dur="7s"
+            repeatCount="indefinite"
+            calcMode="spline"
+            keyTimes="0;0.5;1"
+            keySplines="0.45 0 0.2 1;0.45 0 0.2 1"
+            values="M 60 12 C 86.5 12 108 33.5 108 60 C 108 86.5 86.5 108 60 108 C 33.5 108 12 86.5 12 60 C 12 33.5 33.5 12 60 12 Z; M 60 12 C 90 12 108 30 108 60 C 108 90 90 108 60 108 C 30 108 12 90 12 60 C 12 30 30 12 60 12 Z; M 60 12 C 86.5 12 108 33.5 108 60 C 108 86.5 86.5 108 60 108 C 33.5 108 12 86.5 12 60 C 12 33.5 33.5 12 60 12 Z"
+          />
+        </path>
+        <path
+          class="m-still"
+          fill="none"
+          stroke="var(--color-accent)"
+          stroke-width="3"
+          d="M 60 12 C 86.5 12 108 33.5 108 60 C 108 86.5 86.5 108 60 108 C 33.5 108 12 86.5 12 60 C 12 33.5 33.5 12 60 12 Z"
+        />
+      </svg>
+    </div>
+
+    <h1 class="k404">
+      <span class="w"><span class="wi">Страница</span></span>
+      {' '}
+      <span class="w"><span class="wi">не</span></span>
+      {' '}
+      <span class="w"><span class="wi">найдена.</span></span>
+    </h1>
+
+    <p class="hint404">Возможно, страница переехала или в адресе опечатка.</p>
+
+    <p class="act404">
+      <a class="biglink" href={`${base}/`}>
+        На главную →
+        <svg class="ul404" viewBox="0 0 220 6" preserveAspectRatio="none" aria-hidden="true">
+          <line x1="2" y1="3" x2="218" y2="3" pathLength="100" />
+        </svg>
+      </a>
+    </p>
+  </section>
+</Base>
+
+<script>
+  // Триггер кинетики маски-слов: двойной rAF после парсинга; astro:page-load —
+  // на случай рендера 404 при клиент-навигации (ClientRouter активен в Base).
+  const el = document.querySelector('.k404');
+  const fire = () =>
+    requestAnimationFrame(() => requestAnimationFrame(() => el?.classList.add('is-in')));
+  fire();
+  document.addEventListener('astro:page-load', fire);
+</script>

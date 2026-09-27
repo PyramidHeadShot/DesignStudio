@@ -32,6 +32,8 @@ const logoSpans = [...LOGO]
     <!-- preload основного subset'а (кириллица — язык сайта) -->
     <link rel="preload" as="font" type="font/woff2" href={cyrFont} crossorigin />
       <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+      <!-- Волна O: слот для page-специфичных meta (404: noindex) -->
+      <slot name="head" />
 </head>
   <body>
     <header class="site-header">
