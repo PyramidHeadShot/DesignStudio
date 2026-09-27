@@ -34,15 +34,19 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       </p>
     </header>
     {entry.data.cover && (
-      <Image
-        class="case-hero"
-        src={entry.data.cover}
-        alt={`${entry.data.title} — обложка кейса`}
-        widths={[800, 1200, 1600]}
-        sizes="(min-width: 900px) 860px, 100vw"
-        loading="eager"
-        decoding="async"
-      />
+      <!-- Волна Q: обёртка параллакса — overflow hidden; fade-up перенесён с img на
+           обёртку (иначе fill-mode обеих блокировал бы inline transform параллакса) -->
+      <div class="case-hero-wrap">
+        <Image
+          class="case-hero"
+          src={entry.data.cover}
+          alt={`${entry.data.title} — обложка кейса`}
+          widths={[800, 1200, 1600]}
+          sizes="(min-width: 900px) 860px, 100vw"
+          loading="eager"
+          decoding="async"
+        />
+      </div>
     )}
     <div class="case-body">
       <Content />
@@ -59,7 +63,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     // Страница кейса — минимум JS: прогресс-линия (rAF, transform scaleX)
     // и кинетический заголовок по словам (маска + CSS-transition со stagger-задержками).
     // Без библиотеки анимаций (budget), при prefers-reduced-motion — мгновенно.
-    import { splitWords, reduceMotion } from '../../scripts/lib';
+    import { reduceMotion } from '../../scripts/lib';
 
     // Волна N: модуль исполняется один раз; scroll-слушатель — постоянный (bar
     // перечитывается на каждый boot), элементное — в boot() (верхний вызов +
@@ -67,6 +71,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     document.documentElement.classList.add('js');
 
     let bar: HTMLElement | null = null;
+    let parallaxHero: HTMLElement | null = null;
     let ticking = false;
     const updateProgress = () => {
       ticking = false;
@@ -75,28 +80,70 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
       bar.style.transform = `scaleX(${p})`;
     };
-    window.addEventListener(
-      'scroll',
-      () => {
-        if (!ticking) {
-          ticking = true;
-          requestAnimationFrame(updateProgress);
+    // --- Волна Q: параллакс hero-фото (демо №18, subtle): ±6% высоты, rAF+passive.
+    // Слушатель постоянный (модуль один раз), hero перечитывается в boot().
+    const updateParallax = () => {
+      if (!parallaxHero) return;
+      const r = parallaxHero.getBoundingClientRect();
+      const vh = window.innerHeight;
+      if (r.bottom < 0 || r.top > vh) return; // вне экрана — не считаем
+      const p = (vh - r.top) / (vh + r.height) - 0.5; // −0.5..0.5
+      const y = Math.max(-1, Math.min(1, p * 2)) * parallaxHero.offsetHeight * 0.06;
+      parallaxHero.style.transform = `translateY(${y.toFixed(1)}px) scale(1.08)`;
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => {
+          updateProgress();
+          updateParallax();
+        });
+      }
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // --- Волна Q: «буквы-дождик» (демо №06) — посимвольные маски. Техника — CSS
+    // transitions (паттерн logo-волны): anime.js ради 12-40 букв не тянем.
+    // Только буквы/цифры маскируются, знаки препинания/кавычки — на местах.
+    const splitChars = (el: HTMLElement) => {
+      const text = el.textContent ?? '';
+      el.setAttribute('aria-label', text.trim());
+      el.textContent = '';
+      const chars: HTMLElement[] = [];
+      let i = 0;
+      for (const ch of [...text]) {
+        if (/[\p{L}\p{N}]/u.test(ch)) {
+          const w = document.createElement('span');
+          w.className = 'cw';
+          w.setAttribute('aria-hidden', 'true');
+          const c = document.createElement('span');
+          c.className = 'ci';
+          c.textContent = ch;
+          c.style.transitionDelay = `${i * 30}ms`; // stagger 30 мс
+          w.appendChild(c);
+          el.appendChild(w);
+          chars.push(c);
+          i++;
+        } else {
+          el.appendChild(document.createTextNode(ch));
         }
-      },
-      { passive: true },
-    );
+      }
+      return chars;
+    };
 
     function boot() {
       bar = document.querySelector<HTMLElement>('.read-progress');
       updateProgress();
 
-      // --- Заголовок по словам (при reduce — не разбиваем; splitWords идемпотентен) ---
+      // --- Волна Q: параллакс — только при JS и без reduce; без них статика ---
+      const hero = document.querySelector<HTMLElement>('.case-hero');
+      parallaxHero = hero && !reduceMotion().matches ? hero : null;
+      if (parallaxHero) updateParallax();
+
+      // --- Заголовок: «буквы-дождик» (при reduce — не разбиваем: DOM pristine) ---
       const h1 = document.querySelector<HTMLElement>('.case-head h1');
       if (h1 && !reduceMotion().matches) {
-        const words = splitWords(h1);
-        words.forEach((w, i) => {
-          (w.style as CSSStyleDeclaration).transitionDelay = `${i * 70}ms`;
-        });
+        splitChars(h1);
         requestAnimationFrame(() => {
           requestAnimationFrame(() => h1.classList.add('is-in'));
         });
@@ -108,8 +155,9 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 
     document.addEventListener('astro:page-load', () => {
       if (!document.querySelector('.case-head')) {
-        // не страница кейса — слушатель остаётся, но молчит (bar = null)
+        // не страница кейса — слушатель остаётся, но молчит (bar/hero = null)
         bar = null;
+        parallaxHero = null;
         return;
       }
       const main = document.querySelector('main');

@@ -296,8 +296,31 @@ html.js .work-filters {
 .case-hero {
   display: block;
   width: 100%;
-  aspect-ratio: 3 / 2;
+  height: 100%;
   object-fit: cover;
+  transform: scale(1.08); /* запас под параллакс — краёв не видно */
+}
+/* Волна Q: параллакс hero-фото — обёртка с overflow hidden; fade-up на ней же
+   (fill-mode both не должен блокировать inline transform параллакса на img) */
+.case-hero-wrap {
+  overflow: hidden;
+  aspect-ratio: 3 / 2;
+  background: var(--color-line);
+  animation: fade-up 0.55s ease-out both;
+  animation-delay: 0.1s;
+}
+/* «Буквы-дождик» заголовка кейса: маски .cw/буквы .ci; без JS и при reduce —
+   статичный текст (правила гейтятся html.js + no-preference); line-height
+   заголовка фиксирован (волна G) — CLS 0 */
+.cw { display: inline-block; overflow: hidden; vertical-align: top; }
+.ci { display: inline-block; }
+@media (prefers-reduced-motion: no-preference) {
+  html.js .case-head h1 .ci {
+    opacity: 0;
+    transform: translateY(-1.1em);
+    transition: transform 0.42s cubic-bezier(0.34, 1.4, 0.64, 1), opacity 0.3s ease; /* микро-overshoot ≤6% */
+  }
+  html.js .case-head h1.is-in .ci { opacity: 1; transform: none; }
 }
 .case-body img {
   display: block;
@@ -313,8 +336,7 @@ html.js .work-filters {
   to { opacity: 1; transform: none; }
 }
 
-/* Страница кейса: hero-фото появляется при загрузке (без JS) */
-.case-hero { animation: fade-up 0.55s ease-out both; animation-delay: 0.1s; }
+/* Страница кейса: hero-фото появляется при загрузке (fade-up на обёртке параллакса) */
 
 /* --- Кинетический заголовок: слова-маски (.w > .wi) ---
    Слова остаются обычным текстом в DOM (a11y). Начальные состояния —
