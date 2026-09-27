@@ -107,7 +107,7 @@ html.js .site-nav a { display: inline-block; }
 
 /* Волна K: marquee-тикер подзаголовка героя (демо №20). Техника — CSS-keyframes:
    декоративный бесконечный loop без привязки к скроллу/событиям — JS не нужен.
-   Только transform (translateX), линейная скорость, цикл 36 с. CLS = 0:
+   Только transform (translateX), линейная скорость, цикл 72 с. CLS = 0:
    фиксированная высота строки, overflow hidden. Hover — пауза. */
 .ticker { overflow: hidden; }
 .hero .ticker {
@@ -127,7 +127,7 @@ html.js .site-nav a { display: inline-block; }
 .ticker-track {
   display: inline-flex;
   will-change: transform;
-  animation: ticker-scroll 36s linear infinite;
+  animation: ticker-scroll 72s linear infinite;
 }
 .ticker:hover .ticker-track { animation-play-state: paused; }
 .ticker-g { display: inline-flex; align-items: baseline; }
