@@ -11,13 +11,33 @@ const cases = (await getCollection('cases')).sort(
 const categories = [...new Set(cases.map((c) => c.data.category))];
 // BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio)
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+// Волна K: marquee-тикер подзаголовка героя (демо №20). Количество повторов
+// фразы в ОДНОЙ половине трека: половина ≥ ширины вьюпорта → бесшовный -50% loop
+// даже на широких экранах (~4300px на повтор).
+const TICKER_REPS = 10;
 ---
 
 <Base title="DesignStudio — работы">
   <section class="hero">
     <h1>{SITE.heroTitle}</h1>
-    <!-- ЗАГЛУШКА из SITE.heroText; принцип show-don't-tell (design-principles.md п.1) -->
-    <p>{SITE.heroText}</p>
+    <!-- Волна K: подзаголовок — бесшовный marquee-тикер (демо №20). Читаемый
+         экземпляр один (.ticker-static, скрыт визуально, читается скринридером;
+         при prefers-reduced-motion становится видимой статичной фразой), весь
+         визуальный трек aria-hidden. Разделитель — акцентная точка · -->
+    <p class="ticker">
+      <span class="ticker-static">{SITE.heroText}</span>
+      <span class="ticker-viewport" aria-hidden="true">
+        <span class="ticker-track">
+          {[0, 1].map((h) => (
+            <span class="ticker-g">
+              {Array.from({ length: TICKER_REPS }).map(() => (
+                <span class="ticker-u">{SITE.heroText} <span class="ticker-dot">·</span></span>
+              ))}
+            </span>
+          ))}
+        </span>
+      </span>
+    </p>
   </section>
 
   <section aria-label="Портфолио">

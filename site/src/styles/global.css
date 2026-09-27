@@ -105,6 +105,45 @@ html.js .site-nav a { display: inline-block; }
 }
 .hero p { max-width: 42ch; color: var(--muted); }
 
+/* Волна K: marquee-тикер подзаголовка героя (демо №20). Техника — CSS-keyframes:
+   декоративный бесконечный loop без привязки к скроллу/событиям — JS не нужен.
+   Только transform (translateX), линейная скорость, цикл 36 с. CLS = 0:
+   фиксированная высота строки, overflow hidden. Hover — пауза. */
+.ticker { overflow: hidden; }
+.hero .ticker {
+  max-width: none; /* перебивает 42ch от .hero p — тикер во всю ширину колонки */
+  border-top: 1px solid var(--color-line);
+  border-bottom: 1px solid var(--color-line);
+  padding: 9px 0;
+}
+.ticker-static {
+  /* читаемый экземпляр: визуально скрыт (opacity:0, вне потока),
+     скринридер читает фразу ровно один раз */
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.ticker-viewport { display: block; overflow: hidden; white-space: nowrap; }
+.ticker-track {
+  display: inline-flex;
+  will-change: transform;
+  animation: ticker-scroll 36s linear infinite;
+}
+.ticker:hover .ticker-track { animation-play-state: paused; }
+.ticker-g { display: inline-flex; align-items: baseline; }
+.ticker-u { margin-right: 20px; }
+.ticker-dot { color: var(--color-accent); margin-left: 4px; }
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* тикер остановлен: фраза статично один раз (как было до волны K) */
+  .hero .ticker { border: none; padding: 0; }
+  .ticker-viewport { display: none; }
+  .ticker-static { position: static; opacity: 1; }
+}
+
 /* Фильтр сетки: без JS скрыт (сетка видна полностью) */
 .work-filters { display: none; }
 html.js .work-filters {
