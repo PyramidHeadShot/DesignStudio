@@ -53,9 +53,14 @@
 }
 
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html { -webkit-text-size-adjust: 100%;
+  background: var(--color-bg); }
 body {
   margin: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
   background: var(--color-bg);
   color: var(--color-ink);
   font-family: 'Inter Tight', 'Inter Tight Fallback', system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -260,6 +265,9 @@ html.js .site-footer.is-in { opacity: 1; transform: none; }
 .site-footer .rule line { stroke: rgba(247, 245, 251, 0.25); stroke-width: 1; stroke-dasharray: 100; }
 html.js .site-footer .rule line { transition: stroke-dashoffset 0.8s ease 0.1s; }
 html.js .site-footer:not(.is-in) .rule line { stroke-dashoffset: 100; }
+
+/* sticky-footer: основной блок растягивается, футер прижат к низу */
+body > main { flex: 1 0 auto; }
 
 /* Футер — инверсный блок: сиреневый туман на графите */
 .site-footer {
