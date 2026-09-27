@@ -1,0 +1,535 @@
+---
+// dev/песочница анимаций для заказчика (волна I): живой каталог эффектов
+// anime.js v4 + наши CSS-приёмы. Страница изолирована: свой <head> (noindex),
+// свой CSS (animations-lab.css), глобальная палитра из global.css.
+// В навигации/sitemap НЕ линкуется; существующие файлы сайта не тронуты.
+import '../../styles/global.css';
+import '../../styles/animations-lab.css';
+
+// Слово для логотипных демо (01–04, 06) и 07/12 — рендерится посимвольно прямо в разметке
+const LOGO = 'DesignStudio';
+---
+
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>dev · Песочница анимаций — DesignStudio</title>
+  </head>
+  <body>
+    <div class="lab">
+      <header class="lab-top">
+        <span class="badge">dev</span>
+        <h1>Песочница анимаций</h1>
+        <p class="intro">
+          Живой каталог эффектов: выбирайте номер — применим его к сайту.
+          Демо проигрываются сами при появлении на экране и по кнопке
+          «Повторить ▸». Под каждым демо — предложение, где эффект уместен.
+        </p>
+        <p class="intro-note">
+          Если в системе включено «уменьшение движения», все демо показывают
+          конечное состояние без анимации. Интерактивные демо (№08, 11, 19)
+          попробуйте руками: фильтр, курсор, нажатие.
+        </p>
+        <nav class="toc" aria-label="Разделы каталога">
+          <a href="#logo">Логотип 01–04</a>
+          <a href="#typo">Типографика 05–07</a>
+          <a href="#grid">Сетка/FLIP 08–11</a>
+          <a href="#svg">SVG 12–15</a>
+          <a href="#scroll">Скролл/цифры 16–18</a>
+          <a href="#micro">Микро 19–20</a>
+        </nav>
+      </header>
+
+      <!-- ================= ЛОГОТИП DesignStudio (01–04) ================= -->
+      <section id="logo">
+        <h2>Логотип DesignStudio — кандидаты</h2>
+        <div class="grid">
+          <article class="card" data-demo="01">
+            <header class="card-head"><span class="num">01</span><h3>Волна по буквам</h3></header>
+            <p class="what">Буквы всплывают из масок со stagger 35 мс.</p>
+            <p class="where"><b>Где:</b> логотип в шапке и футере, hero-заголовок кейса.</p>
+            <div class="zone"><span class="lgw" aria-label={LOGO}>{[...LOGO].map((ch) => <span class="lm" aria-hidden="true"><span class="li">{ch}</span></span>)}</span></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="02">
+            <header class="card-head"><span class="num">02</span><h3>Знакомство по буквам</h3></header>
+            <p class="what">Буквы раскрываются: rotateX −60° → 0 с проявлением.</p>
+            <p class="where"><b>Где:</b> логотип на обложке кейса, промо-блоки.</p>
+            <div class="zone"><span class="lgw flip" aria-label={LOGO}>{[...LOGO].map((ch) => <span class="lm" aria-hidden="true"><span class="li">{ch}</span></span>)}</span></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="03">
+            <header class="card-head"><span class="num">03</span><h3>Печатная машинка</h3></header>
+            <p class="what">Буквы проявляются поочерёдно, мигает курсор-акцент.</p>
+            <p class="where"><b>Где:</b> слоган в hero, короткие подписи на «пустых» страницах.</p>
+            <div class="zone"><span class="lgw" aria-label={LOGO}>{[...LOGO].map((ch) => <span class="lm" aria-hidden="true"><span class="li">{ch}</span></span>)}<span class="cur" aria-hidden="true"></span></span></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="04">
+            <header class="card-head"><span class="num">04</span><h3>Весы (пружина)</h3></header>
+            <p class="what">Буквы «садятся» на место с лёгким overshoot.</p>
+            <p class="where"><b>Где:</b> логотип, крупные промо-заголовки.</p>
+            <div class="zone"><span class="lgw" aria-label={LOGO}>{[...LOGO].map((ch) => <span aria-hidden="true"><span class="lb">{ch}</span></span>)}</span></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= ТИПОГРАФИКА (05–07) ================= -->
+      <section id="typo">
+        <h2>Типографика / заголовки</h2>
+        <div class="grid">
+          <article class="card" data-demo="05">
+            <header class="card-head"><span class="num">05</span><h3>Маска-слова</h3></header>
+            <p class="what">Слова всплывают из масок со stagger 80 мс.</p>
+            <p class="where"><b>Где:</b> hero главной и заголовки кейсов (уже применён).</p>
+            <div class="zone">
+              <p class="demo-h" aria-label="Движение создаёт смысл">
+                <span class="wm" aria-hidden="true"><span class="wi2">Движение</span></span>
+                <span class="wm" aria-hidden="true"><span class="wi2">создаёт</span></span>
+                <span class="wm" aria-hidden="true"><span class="wi2">смысл</span></span>
+              </p>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="06">
+            <header class="card-head"><span class="num">06</span><h3>Буквы-дождик</h3></header>
+            <p class="what">Буквы падают сверху и выстраиваются в строку (outBounce).</p>
+            <p class="where"><b>Где:</b> блок «о студии��, промо-полосы.</p>
+            <div class="zone"><span class="lgw" aria-label={LOGO}>{[...LOGO].map((ch) => <span aria-hidden="true"><span class="lb">{ch}</span></span>)}</span></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="07">
+            <header class="card-head"><span class="num">07</span><h3>Blur-расфокус → чёткость</h3></header>
+            <p class="what">Расфокус собирается в чёткость. <span class="gpu">⚠️ дороже по GPU (filter blur).</span></p>
+            <p class="where"><b>Где:</b> «кино»-заставка страницы кейса, video-like hero.</p>
+            <div class="zone"><span class="lgw s07" style="--blur: 0">DesignStudio</span></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= СЕТКА / FLIP (08–11) ================= -->
+      <section id="grid">
+        <h2>Сетка / FLIP</h2>
+        <div class="grid">
+          <article class="card" data-demo="08">
+            <header class="card-head"><span class="num">08</span><h3>FLIP-перестановка сетки</h3></header>
+            <p class="what">Фильтр переставляет плитки без layout-скачков (FLIP).</p>
+            <p class="where"><b>Где:</b> сетка главной (уже применён), галереи.</p>
+            <div class="zone">
+              <div class="s08">
+                <div class="tilegrid">
+                  <div class="tile t-a" data-cat="а" aria-hidden="true">1</div>
+                  <div class="tile t-b" data-cat="б" aria-hidden="true">2</div>
+                  <div class="tile t-c" data-cat="в" aria-hidden="true">3</div>
+                  <div class="tile t-d" data-cat="а" aria-hidden="true">4</div>
+                  <div class="tile t-e" data-cat="б" aria-hidden="true">5</div>
+                  <div class="tile t-f" data-cat="в" aria-hidden="true">6</div>
+                </div>
+                <div class="flrow" role="group" aria-label="Демо-фильтр">
+                  <button class="fl" type="button" data-filter="all" aria-pressed="true">Все</button>
+                  <button class="fl" type="button" data-filter="а" aria-pressed="false">А</button>
+                  <button class="fl" type="button" data-filter="б" aria-pressed="false">Б</button>
+                  <button class="fl" type="button" data-filter="в" aria-pressed="false">В</button>
+                </div>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="09">
+            <header class="card-head"><span class="num">09</span><h3>Stagger fade-up плиток</h3></header>
+            <p class="what">Плитки всплывают поочерёдно при появлении.</p>
+            <p class="where"><b>Где:</b> сетка главной, секции кейсов.</p>
+            <div class="zone">
+              <div class="tilegrid">
+                <div class="tile t-a" aria-hidden="true">1</div>
+                <div class="tile t-b" aria-hidden="true">2</div>
+                <div class="tile t-c" aria-hidden="true">3</div>
+                <div class="tile t-d" aria-hidden="true">4</div>
+                <div class="tile t-e" aria-hidden="true">5</div>
+                <div class="tile t-f" aria-hidden="true">6</div>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="10">
+            <header class="card-head"><span class="num">10</span><h3>Stagger scale-in (пружина)</h3></header>
+            <p class="what">Плитки вырастают из малого масштаба с пружиной.</p>
+            <p class="where"><b>Где:</b> промо-блоки, галерея наград/клиентов.</p>
+            <div class="zone">
+              <div class="tilegrid">
+                <div class="tile t-c" aria-hidden="true">1</div>
+                <div class="tile t-e" aria-hidden="true">2</div>
+                <div class="tile t-a" aria-hidden="true">3</div>
+                <div class="tile t-f" aria-hidden="true">4</div>
+                <div class="tile t-b" aria-hidden="true">5</div>
+                <div class="tile t-d" aria-hidden="true">6</div>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="11">
+            <header class="card-head"><span class="num">11</span><h3>Hover-tilt плитки</h3></header>
+            <p class="what">3D-наклон за курсором (transform-only, плавный догон).</p>
+            <p class="where"><b>Где:</b> карточки сетки главной (desktop), промо-плитки.</p>
+            <div class="zone"><div class="tilt-wrap"><div class="tile t-b tilt-tile" aria-hidden="true">3D</div></div></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= SVG (12–15) ================= -->
+      <section id="svg">
+        <h2>SVG</h2>
+        <div class="grid">
+          <article class="card" data-demo="12">
+            <header class="card-head"><span class="num">12</span><h3>Draw-обводка линии</h3></header>
+            <p class="what">Подчёркивание прорисовывается по контуру.</p>
+            <p class="where"><b>Где:</b> нав-ссылки и подписи карточек (уже применён).</p>
+            <div class="zone">
+              <div class="stack">
+                <span class="lgw" style="font-size: 28px">DesignStudio</span>
+                <svg class="uline2" viewBox="0 0 220 6" aria-hidden="true"><line class="d-line" x1="2" y1="3" x2="218" y2="3" /></svg>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="13">
+            <header class="card-head"><span class="num">13</span><h3>Draw-пиктограмма</h3></header>
+            <p class="what">Круг и «галочка» дисциплины рисуются по контуру.</p>
+            <p class="where"><b>Где:</b> списки дисциплин/услуг, чек-пункты кейсов.</p>
+            <div class="zone">
+              <svg class="demo-svg" viewBox="0 0 120 120" aria-hidden="true">
+                <circle class="icon-stroke" cx="60" cy="60" r="44" />
+                <path class="icon-stroke" d="M40 63 L55 78 L82 45" />
+              </svg>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="14">
+            <header class="card-head"><span class="num">14</span><h3>Морфинг фигуры</h3></header>
+            <p class="what">Круг плавно переходит в скруглённый квадрат и назад (loop).</p>
+            <p class="where"><b>Где:</b> логотип-марка/фавикон, лоадер, кнопка «наверх».</p>
+            <div class="zone">
+              <svg class="demo-svg" viewBox="0 0 120 120" aria-hidden="true">
+                <path class="morph-path" d="M 60 12 C 86.5 12 108 33.5 108 60 C 108 86.5 86.5 108 60 108 C 33.5 108 12 86.5 12 60 C 12 33.5 33.5 12 60 12 Z" />
+                <path id="s-14-quad" style="visibility: hidden" d="M 60 12 C 108 12 108 12 108 60 C 108 108 108 108 60 108 C 12 108 12 108 12 60 C 12 12 12 12 60 12 Z" />
+              </svg>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="15">
+            <header class="card-head"><span class="num">15</span><h3>Движение по траектории</h3></header>
+            <p class="what">Точка летит по SVG-кривой (loop, постоянная скорость).</p>
+            <p class="where"><b>Где:</b> дата-визуализации, раздел «процесс» кейса.</p>
+            <div class="zone">
+              <svg class="demo-svg" viewBox="0 0 240 120" style="max-width: 300px" aria-hidden="true">
+                <path id="s-15-route" class="mp-route" d="M12 100 C 70 8, 170 112, 228 20" />
+                <circle class="mp-dot" cx="12" cy="100" r="7" />
+              </svg>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= СКРОЛЛ / ЦИФРЫ (16–18) ================= -->
+      <section id="scroll">
+        <h2>Скролл / цифры</h2>
+        <div class="grid">
+          <article class="card" data-demo="16">
+            <header class="card-head"><span class="num">16</span><h3>Scroll-прогресс шкалы</h3></header>
+            <p class="what">Шкала заполняется по мере прокрутки (scaleX, без layout).</p>
+            <p class="where"><b>Где:</b> прогресс чтения кейса (уже применён).</p>
+            <div class="zone">
+              <div class="s16">
+                <div class="s16-track"><div class="s16-bar"></div></div>
+                <p class="zcap">Скролльте страницу — шкала идёт по прохождению карточки.</p>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="17">
+            <header class="card-head"><span class="num">17</span><h3>Count-up счётчик</h3></header>
+            <p class="what">Число считается 0 → 2 500 с затуханием.</p>
+            <p class="where"><b>Где:</b> блок фактов студии (проекты, годы, награды).</p>
+            <div class="zone">
+              <div class="stack">
+                <span class="cnt">2 500</span>
+                <p class="zcap">проектов передано заказчикам</p>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="18">
+            <header class="card-head"><span class="num">18</span><h3>Параллакс слоёв</h3></header>
+            <p class="what">Три слоя едут с разной скоростью при скролле (subtle).</p>
+            <p class="where"><b>Где:</b> фон-декор hero, разделы кейсов.</p>
+            <div class="zone">
+              <div class="s18">
+                <div class="pl pl-1" aria-hidden="true"></div>
+                <div class="pl pl-2" aria-hidden="true"></div>
+                <div class="pl pl-3" aria-hidden="true"></div>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+        </div>
+      </section>
+
+      <!-- ================= МИКРО (19–20) ================= -->
+      <section id="micro">
+        <h2>Микро-эффекты</h2>
+        <div class="grid">
+          <article class="card" data-demo="19">
+            <header class="card-head"><span class="num">19</span><h3>Press-пружина кнопки</h3></header>
+            <p class="what">Кнопка сжимается при нажатии и отпружинивает назад.</p>
+            <p class="where"><b>Где:</b> все CTA-кнопки сайта (контакты, «наверх»).</p>
+            <div class="zone"><button class="press" type="button" data-press>Нажми меня</button></div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+
+          <article class="card" data-demo="20">
+            <header class="card-head"><span class="num">20</span><h3>Бегущая строка-тикер</h3></header>
+            <p class="what">Бесшовный marquee, loop 15 с (transform-only).</p>
+            <p class="where"><b>Где:</b> полоса партнёров/наград, декор футера.</p>
+            <div class="zone" style="display: block; padding: 16px 0">
+              <div class="mq" aria-hidden="true">
+                <div class="mq-track">
+                  <span class="mq-g">DesignStudio <i>·</i> маски <i>·</i> пружины <i>·</i> FLIP <i>·</i> SVG <i>·</i> scroll <i>·</i>&nbsp;</span>
+                  <span class="mq-g">DesignStudio <i>·</i> маски <i>·</i> пружины <i>·</i> FLIP <i>·</i> SVG <i>·</i> scroll <i>·</i>&nbsp;</span>
+                </div>
+              </div>
+            </div>
+            <button class="btn" type="button" data-replay>Повторить ▸</button>
+          </article>
+        </div>
+      </section>
+
+      <footer class="lab-foot">
+        Внутренняя страница согласования (dev/animations) — в навигации сайта не используется,
+        из индексации исключена. После выбора номеров эффекты переносятся на основные страницы.
+      </footer>
+    </div>
+
+    <script>
+      // Единый скрипт страницы: реестр демо, IntersectionObserver для автоплея,
+      // replay-кнопки, интерактив (фильтр/tilt/press), scroll-связка 16/18.
+      // Правила .agents/skills/animejs/: transform/opacity; начальные состояния
+      // только из JS; prefers-reduced-motion → конечные состояния без анимаций.
+      import { animate, createAnimatable, stagger, spring, svg, utils } from 'animejs';
+      import { reduceMotion } from '../../scripts/lib';
+
+      type Card = HTMLElement & { __anims?: any[] };
+      const RM = () => reduceMotion().matches;
+      const cards = [...document.querySelectorAll('.card')] as Card[];
+      const byNum = (n: string) => cards.find((c) => c.dataset.demo === n);
+      const $1 = (n: string, sel: string) => byNum(n)?.querySelector(sel) as HTMLElement | null;
+      const $$ = (n: string, sel: string) => [...((byNum(n)?.querySelectorAll(sel) ?? []) as any)] as HTMLElement[];
+      const chars = (n: string) => $$(n, '.li');
+      const words = (n: string) => $$(n, '.wi2');
+      const tiles = (n: string) => $$(n, '.tile');
+      const fmt = (v: number) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+
+      // --- Реестр начальных состояний (ставятся только из JS, при reduce — не ставим) ---
+      const inits: Record<string, (c: Card) => void> = {
+        '01': (c) => utils.set(chars('01'), { translateY: '110%' }),
+        '02': (c) => utils.set(chars('02'), { rotateX: -60, opacity: 0 }),
+        '03': (c) => utils.set(chars('03'), { opacity: 0 }),
+        '04': (c) => utils.set(chars('04'), { translateY: -36, opacity: 0 }),
+        '05': (c) => utils.set(words('05'), { translateY: '110%' }),
+        '06': (c) => utils.set(chars('06'), { translateY: -90, opacity: 0 }),
+        '09': (c) => utils.set(tiles('09'), { opacity: 0, translateY: 24 }),
+        '10': (c) => utils.set(tiles('10'), { scale: 0.4, opacity: 0 }),
+        '17': (c) => { const el = $1('17', '.cnt'); if (el) el.textContent = '0'; },
+        '18': (c) => utils.set($$('18', '.pl'), { opacity: 0 }),
+      };
+
+      // --- Реестр демо (проигрывание, вызывается только при !RM) ---
+      const players: Record<string, (c: Card) => void> = {
+        '01': () => animate(chars('01'), { translateY: ['110%', '0%'], delay: stagger(35), duration: 500, ease: 'out(3)' }),
+        '02': () => animate(chars('02'), { rotateX: [-60, 0], opacity: [0, 1], delay: stagger(45), duration: 600, ease: 'out(3)' }),
+        '03': () => animate(chars('03'), { opacity: [0, 1], duration: 30, delay: stagger(55), ease: 'steps(2)' }),
+        '04': () => animate(chars('04'), { translateY: [-36, 0], opacity: [0, 1], delay: stagger(50), duration: 900, ease: spring({ stiffness: 170, damping: 11 }) }),
+        '05': () => animate(words('05'), { translateY: ['110%', '0%'], delay: stagger(80), duration: 550, ease: 'out(3)' }),
+        '06': () => animate(chars('06'), { translateY: [-90, 0], opacity: [0, 1], delay: stagger(40), duration: 950, ease: 'outBounce' }),
+        // 07 — единственное исключение с filter blur (по ТЗ, помечено «дороже по GPU»)
+        '07': () => animate($1('07', '.s07'), { '--blur': [10, 0], opacity: [0.25, 1], duration: 900, ease: 'out(3)' }),
+        '08': () => animate(tiles('08'), { opacity: [0, 1], translateY: [24, 0], delay: stagger(60), duration: 500, ease: 'out(3)' }),
+        '09': () => animate(tiles('09'), { opacity: [0, 1], translateY: [24, 0], delay: stagger(60), duration: 500, ease: 'out(3)' }),
+        '10': () => animate(tiles('10'), { scale: [0.4, 1], opacity: [0, 1], delay: stagger(70), duration: 750, ease: spring({ stiffness: 210, damping: 13 }) }),
+        '11': () => animate($1('11', '.tilt-tile'), { rotateY: [0, 16, -9, 0], rotateX: [0, -11, 7, 0], duration: 1000, ease: 'out(3)' }),
+        '12': () => animate(svg.createDrawable($1('12', '.d-line')), { draw: ['0 0', '0 1'], duration: 700, ease: 'out(3)' }),
+        '13': () => animate(svg.createDrawable($$('13', '.icon-stroke')), { draw: ['0 0', '0 1'], duration: 800, ease: 'out(3)', delay: stagger(140, { start: 100 }) }),
+        '14': (c) => { c.__anims!.push(animate($1('14', '.morph-path'), { d: svg.morphTo('#s-14-quad', 0.5), duration: 1600, ease: 'inOut(3)', loop: true, alternate: true })); },
+        '15': (c) => { c.__anims!.push(animate($1('15', '.mp-dot'), { ...svg.createMotionPath('#s-15-route'), duration: 4200, ease: 'linear', loop: true })); },
+        '16': () => animate($1('16', '.s16-bar'), { scaleX: [0, 1], duration: 900, ease: 'out(3)' }),
+        '17': () => {
+          const el = $1('17', '.cnt');
+          if (!el) return;
+          const o = { v: 0 };
+          animate(o, { v: 2500, duration: 1800, ease: 'out(3)', onUpdate: () => { el.textContent = fmt(o.v); } });
+        },
+        '18': () => animate($$('18', '.pl'), { opacity: [0, 1], delay: stagger(120), duration: 700, ease: 'out(2)' }),
+        '19': () => {
+          const b = $1('19', '.press');
+          if (!b) return;
+          animate(b, { scale: [1, 0.9], duration: 110, ease: 'out(3)' }).then(() =>
+            animate(b, { scale: 1, duration: 550, ease: spring({ stiffness: 300, damping: 10 }) }),
+          );
+        },
+        '20': (c) => { c.__anims!.push(animate($1('20', '.mq-track'), { translateX: ['0%', '-50%'], duration: 15000, ease: 'linear', loop: true })); },
+      };
+
+      // --- Запуск демо: активные твины карточки отменяются перед повтором ---
+      function playCard(card: Card) {
+        if (RM()) return; // конечные состояния уже в DOM — без анимаций
+        card.__anims?.forEach((a) => { try { a.cancel(); } catch {} });
+        card.__anims = [];
+        players[card.dataset.demo as string]?.(card);
+      }
+
+      // --- Автоплей по появлению в вьюпорте ---
+      if (!RM()) {
+        for (const card of cards) inits[card.dataset.demo as string]?.(card);
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (!e.isIntersecting) continue;
+              playCard(e.target.closest('.card') as Card);
+              io.unobserve(e.target);
+            }
+          },
+          { threshold: 0.35 },
+        );
+        document.querySelectorAll('.card .zone').forEach((z) => io.observe(z));
+      }
+
+      // --- Кнопки «Повторить ▸» (работают всегда, но не анимируют при reduce) ---
+      document.querySelectorAll('[data-replay]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const card = (btn as HTMLElement).closest('.card') as Card | null;
+          if (card && !RM()) playCard(card);
+        });
+      });
+
+      // --- №08: FLIP-фильтр плиток (ручной FLIP, как на главной) ---
+      {
+        const btns = $$('08', '.fl');
+        const els = tiles('08');
+        btns.forEach((b) => {
+          b.addEventListener('click', () => {
+            const cat = b.dataset.filter ?? 'all';
+            btns.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+            const first = new Map(els.map((el) => [el, el.getBoundingClientRect()]));
+            els.forEach((el) => { el.hidden = cat !== 'all' && el.dataset.cat !== cat; });
+            if (RM()) return; // при reduce — мгновенная перестановка без FLIP
+            els.filter((el) => !el.hidden).forEach((el) => {
+              const f = first.get(el);
+              if (!f) return;
+              const l = el.getBoundingClientRect();
+              const dx = f.left - l.left;
+              const dy = f.top - l.top;
+              if (Math.abs(dx) > 1 || Math.abs(dy) > 1)
+                animate(el, { translateX: [dx, 0], translateY: [dy, 0], duration: 420, ease: 'out(3)' });
+            });
+          });
+        });
+      }
+
+      // --- №11: hover-tilt (createAnimatable — chained-twins, догон курсора) ---
+      {
+        const tile = $1('11', '.tilt-tile');
+        if (tile) {
+          const rot = createAnimatable(tile, { rotateX: 500, rotateY: 500, ease: 'out(2)' });
+          tile.addEventListener('pointermove', (e) => {
+            if (RM()) return;
+            const r = tile.getBoundingClientRect();
+            const x = (e.clientX - r.left) / r.width - 0.5;
+            const y = (e.clientY - r.top) / r.height - 0.5;
+            rot.rotateY(x * 22);
+            rot.rotateX(-y * 18);
+          });
+          tile.addEventListener('pointerleave', () => { rot.rotateY(0); rot.rotateX(0); });
+        }
+      }
+
+      // --- №19: press-пружина (сжатие на down, отдача spring на up/leave) ---
+      {
+        const pb = $1('19', '.press');
+        const back = () => { if (!RM()) animate(pb as HTMLElement, { scale: 1, duration: 550, ease: spring({ stiffness: 300, damping: 10 }) }); };
+        pb?.addEventListener('pointerdown', () => { if (!RM()) animate(pb, { scale: 0.9, duration: 110, ease: 'out(3)' }); });
+        pb?.addEventListener('pointerup', back);
+        pb?.addEventListener('pointerleave', back);
+      }
+
+      // --- №16: шкала прогресса, синхронизированная со скроллом (rAF, passive) ---
+      {
+        const card = byNum('16');
+        const bar = $1('16', '.s16-bar');
+        if (card && bar && !RM()) {
+          let ticking = false;
+          let playing = false; // на время replay-анимации скролл-связка молчит
+          const upd = () => {
+            ticking = false;
+            if (playing) return;
+            const r = card.getBoundingClientRect();
+            const vh = window.innerHeight;
+            const p = Math.min(Math.max((vh - r.top) / (vh + r.height), 0), 1);
+            bar.style.transform = `scaleX(${p})`;
+          };
+          window.addEventListener('scroll', () => {
+            if (!ticking) { ticking = true; requestAnimationFrame(upd); }
+          }, { passive: true });
+          // replay №16: одиночный свип 0→1 с флагом playing
+          document.querySelectorAll('[data-replay]').forEach((btn) => {
+            if ((btn as HTMLElement).closest('.card') !== card) return;
+            btn.addEventListener('click', () => {
+              if (RM()) return;
+              playing = true;
+              animate(bar, { scaleX: [0, 1], duration: 900, ease: 'out(3)' }).then(() => { playing = false; upd(); });
+            });
+          });
+        }
+      }
+
+      // --- №18: параллакс слоёв при скролле (rAF, passive, subtle) ---
+      {
+        const card = byNum('18');
+        const pls = $$('18', '.pl');
+        if (card && pls.length && !RM()) {
+          const ks = [22, -38, 60]; // скорость слоя (px на всю высоту прохода)
+          let ticking = false;
+          const upd = () => {
+            ticking = false;
+            const r = card.getBoundingClientRect();
+            const vh = window.innerHeight;
+            const p = Math.min(Math.max((vh - r.top) / (vh + r.height), 0), 1);
+            pls.forEach((el, i) => { el.style.transform = `translateY(${(p - 0.5) * ks[i]}px)`; });
+          };
+          window.addEventListener('scroll', () => {
+            if (!ticking) { ticking = true; requestAnimationFrame(upd); }
+          }, { passive: true });
+          upd();
+        }
+      }
+    </script>
+  </body>
+</html>
