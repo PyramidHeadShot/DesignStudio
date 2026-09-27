@@ -90,7 +90,7 @@ a:hover { color: var(--color-accent-strong); }
 }
 .site-header.is-scrolled { border-bottom-color: var(--color-line); }
 .logo { font-size: clamp(24px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; }
-.site-nav { display: flex; gap: 24px; font-size: 14px; }
+.site-nav { display: flex; gap: 24px; font-size: 16px; }
 html.js .site-nav a { display: inline-block; }
 
 /* Герой: крупная типографика вместо декора */
@@ -130,6 +130,7 @@ html.js .site-nav a { display: inline-block; }
   animation: ticker-scroll 72s linear infinite;
 }
 .ticker:hover .ticker-track { animation-play-state: paused; }
+.ticker, .ticker-g { font-size: 19px; }
 .ticker-g { display: inline-flex; align-items: baseline; }
 .ticker-u { margin-right: 20px; }
 .ticker-dot { color: var(--color-accent); margin-left: 4px; }
@@ -158,7 +159,7 @@ html.js .work-filters {
   border: 0;
   padding: 2px 0;
   font: inherit;
-  font-size: 14px;
+  font-size: 17px;
   color: var(--muted);
   cursor: pointer;
   display: inline-flex; /* Волна L: иконка + текст */
