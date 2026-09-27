@@ -191,14 +191,16 @@ html.js .site-nav a { display: inline-block; }
   .ticker-static { position: static; opacity: 1; }
 }
 
-/* Фильтр сетки: без JS скрыт (сетка видна полностью) */
-.work-filters { display: none; }
-html.js .work-filters {
+/* Фильтр сетки: место резервируется всегда (visibility, а не display) —
+   без JS кнопки невидимы, но сетка не сдвигается после html.js (волна S, CLS) */
+.work-filters {
+  visibility: hidden;
   display: flex;
   flex-wrap: wrap;
   gap: 4px 20px;
   padding: 0 var(--pad) var(--pad);
 }
+html.js .work-filters { visibility: visible; }
 .work-filter {
   appearance: none;
   background: none;

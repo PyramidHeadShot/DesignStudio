@@ -9,6 +9,12 @@ const cases = (await getCollection('cases')).sort(
 );
 // Категории (дисциплины) в порядке первых вхождений — для строки фильтров
 const categories = [...new Set(cases.map((c) => c.data.category))];
+// Волна S: слова hero — маски прямо в HTML (раньше splitWords перестраивал DOM
+// на ~170мс → layout-shift сетки). Маски в серверной разметке = DOM стабилен.
+const heroSpans = SITE.heroTitle
+  .split(' ')
+  .map((w) => `<span class="w" aria-hidden="true"><span class="wi">${w}</span></span>`)
+  .join(' ');
 // Волна P: счётчик работ у фильтра (демо №17) — статичный текст в HTML и
 // клиентский пересчёт: правильное склонение по-русски (1 работа / 2 работы / 5 работ)
 const total = cases.length;
@@ -39,7 +45,9 @@ const ICONS: Record<string, string> = {
 
 <Base title="DesignStudio — работы">
   <section class="hero">
-    <h1>{SITE.heroTitle}</h1>
+    <!-- Волна S: микро-деталь брутализма — одна маркировка (моно, ink-muted) -->
+    <p class="hero-tag" aria-hidden="true">DS—01 / 2026</p>
+    <h1 aria-label={SITE.heroTitle}><Fragment set:html={heroSpans} /></h1>
     <!-- Волна K: подзаголовок — бесшовный marquee-тикер (демо №20). Читаемый
          экземпляр один (.ticker-static, скрыт визуально, читается скринридером;
          при prefers-reduced-motion становится видимой статичной фразой), весь
@@ -58,6 +66,10 @@ const ICONS: Record<string, string> = {
         </span>
       </span>
     </p>
+    <!-- Волна S: draw-разделитель hero/сетка (демо №12; сдержанный --color-line) -->
+    <svg class="hero-rule" viewBox="0 0 1200 2" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="0" y1="1" x2="1200" y2="1" pathLength="100" />
+    </svg>
   </section>
 
   <section aria-label="Портфолио">
@@ -118,7 +130,7 @@ const ICONS: Record<string, string> = {
     // 3) карточки ниже вьюпорта — reveal по IntersectionObserver через animate().
     // Все эффекты замораживаются при prefers-reduced-motion (полный freeze).
     import { animate, createAnimatable, createTimeline, createScope, stagger, utils } from 'animejs';
-    import { splitWords, reduceMotion } from '../scripts/lib';
+    import { reduceMotion } from '../scripts/lib';
 
     // Волна N: вся инициализация — в boot(); модуль исполняется один раз.
     // Первый показ главной обслуживает верхний boot(), повторные приходы —
@@ -187,7 +199,8 @@ const ICONS: Record<string, string> = {
 
       if (!frozen()) {
         // стартовые состояния — только из JS (без JS всё видно)
-        if (h1) words = splitWords(h1);
+        // Волна S: слова уже в HTML-масках (без splitWords — DOM стабилен)
+        if (h1) words = [...document.querySelectorAll<HTMLElement>('.hero h1 .wi')];
         const vh = window.innerHeight;
         const above = cards.filter((el) => el.getBoundingClientRect().top < vh);
         const below = cards.filter((el) => el.getBoundingClientRect().top >= vh);
@@ -217,6 +230,7 @@ const ICONS: Record<string, string> = {
               // Волна P: там же — count-up 0 → N (единый ритм появления)
               onBegin: () => {
                 filtersRow?.classList.add('icons-drawn');
+                document.querySelector('.hero-rule')?.classList.add('is-drawn');
                 countTo(total, 700, 0);
               },
             },
