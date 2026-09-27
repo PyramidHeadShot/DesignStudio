@@ -4,6 +4,10 @@
 /** Разбить текст элемента на слова-обёртки для кинетического появления.
  *  Слова остаются обычным текстом в DOM (a11y: скринридер читает связно). */
 export function splitWords(el: HTMLElement): HTMLElement[] {
+  // Волна N: идемпотентность — повторный вызов на уже разбитом тексте
+  // возвращает существующие .wi, не пересобирая DOM (без двойных масок).
+  const existing = [...el.querySelectorAll<HTMLElement>('.wi')];
+  if (existing.length) return existing;
   const parts = (el.textContent ?? '').split(/(\s+)/);
   el.textContent = '';
   const inners: HTMLElement[] = [];

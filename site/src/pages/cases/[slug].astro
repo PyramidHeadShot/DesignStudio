@@ -61,10 +61,12 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     // Без библиотеки анимаций (budget), при prefers-reduced-motion — мгновенно.
     import { splitWords, reduceMotion } from '../../scripts/lib';
 
+    // Волна N: модуль исполняется один раз; scroll-слушатель — постоянный (bar
+    // перечитывается на каждый boot), элементное — в boot() (верхний вызов +
+    // astro:page-load c маркером data-sboot на <main>).
     document.documentElement.classList.add('js');
 
-    // --- Прогресс чтения ---
-    const bar = document.querySelector<HTMLElement>('.read-progress');
+    let bar: HTMLElement | null = null;
     let ticking = false;
     const updateProgress = () => {
       ticking = false;
@@ -83,18 +85,37 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       },
       { passive: true },
     );
-    updateProgress();
 
-    // --- Заголовок по словам (при reduce — не разбиваем: DOM остаётся pristine) ---
-    const h1 = document.querySelector<HTMLElement>('.case-head h1');
-    if (h1 && !reduceMotion().matches) {
-      const words = splitWords(h1);
-      words.forEach((w, i) => {
-        (w.style as CSSStyleDeclaration).transitionDelay = `${i * 70}ms`;
-      });
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => h1.classList.add('is-in'));
-      });
+    function boot() {
+      bar = document.querySelector<HTMLElement>('.read-progress');
+      updateProgress();
+
+      // --- Заголовок по словам (при reduce — не разбиваем; splitWords идемпотентен) ---
+      const h1 = document.querySelector<HTMLElement>('.case-head h1');
+      if (h1 && !reduceMotion().matches) {
+        const words = splitWords(h1);
+        words.forEach((w, i) => {
+          (w.style as CSSStyleDeclaration).transitionDelay = `${i * 70}ms`;
+        });
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => h1.classList.add('is-in'));
+        });
+      }
     }
+
+    boot();
+    document.querySelector('main')?.setAttribute('data-sboot', '1');
+
+    document.addEventListener('astro:page-load', () => {
+      if (!document.querySelector('.case-head')) {
+        // не страница кейса — слушатель остаётся, но молчит (bar = null)
+        bar = null;
+        return;
+      }
+      const main = document.querySelector('main');
+      if (main?.hasAttribute('data-sboot')) return;
+      boot();
+      main?.setAttribute('data-sboot', '1');
+    });
   </script>
 </Base>

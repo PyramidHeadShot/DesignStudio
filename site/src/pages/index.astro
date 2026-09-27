@@ -104,8 +104,15 @@ const ICONS: Record<string, string> = {
     import { animate, createAnimatable, createTimeline, createScope, stagger, utils } from 'animejs';
     import { splitWords, reduceMotion } from '../scripts/lib';
 
+    // Волна N: вся инициализация — в boot(); модуль исполняется один раз.
+    // Первый показ главной обслуживает верхний boot(), повторные приходы —
+    // astro:page-load (маркер data-mboot на <main>; после свапа main новый).
+    // Уход с главной: astro:before-swap сносит scope (твины не тикают в пустоту).
     document.documentElement.classList.add('js');
 
+    let scope: ReturnType<typeof createScope> | null = null;
+
+    function boot() {
     const cards = [...document.querySelectorAll<HTMLElement>('.work-card')];
     const filterBtns = [...document.querySelectorAll<HTMLButtonElement>('.work-filter')];
     const filtersRow = document.querySelector<HTMLElement>('.work-filters');
@@ -326,6 +333,29 @@ const ICONS: Record<string, string> = {
       }
 
       return () => io?.disconnect();
+      });
+    }
+
+    boot();
+    document.querySelector('main')?.setAttribute('data-mboot', '1');
+
+    document.addEventListener('astro:page-load', () => {
+      if (!document.querySelector('.work-grid')) {
+        // мы не на главной — гасим твины предыдущего экземпляра
+        scope?.revert();
+        scope = null;
+        return;
+      }
+      const main = document.querySelector('main');
+      if (main?.hasAttribute('data-mboot')) return; // этот экземпляр уже поднят верхним boot()
+      scope?.revert();
+      boot();
+      main?.setAttribute('data-mboot', '1');
+    });
+
+    document.addEventListener('astro:before-swap', () => {
+      scope?.revert();
+      scope = null;
     });
   </script>
 </Base>

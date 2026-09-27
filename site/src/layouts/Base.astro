@@ -1,5 +1,6 @@
 ---
 import '../styles/global.css';
+import { ClientRouter, fade } from 'astro:transitions';
 import cyrFont from '../assets/fonts/inter-tight-cyrillic.woff2?url';
 import { SITE } from '../config';
 
@@ -21,6 +22,9 @@ const logoSpans = [...LOGO]
 <!doctype html>
 <html lang="ru">
   <head>
+    <!-- Волна N: клиентские переходы (SPA) — тонкий fade на <main>, встроенный
+         astro-fade сам отключается при prefers-reduced-motion -->
+    <ClientRouter />
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
@@ -38,7 +42,7 @@ const logoSpans = [...LOGO]
         <a href={`${base}/#contact`}>Контакты</a>
       </nav>
     </header>
-    <main>
+    <main transition:animate={fade({ duration: '0.3s', easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })}>
       <slot />
     </main>
     <footer class="site-footer" id="contact">
@@ -59,37 +63,51 @@ const logoSpans = [...LOGO]
       // чистый CSS-hover после одноразовой инъекции, без библиотеки на странице кейса.
       import { reduceMotion } from '../scripts/lib';
 
+      // Волна N: модуль исполняется один раз (Astro дедуплицирует скрипты), поэтому
+      // document/window-слушатели навешены здесь ОДИН раз и читают DOM заново на вызов.
+      // Всё элементное (logo-in, uline, футер-IO) — в initBase() по astro:page-load
+      // (событие файрит и на первой загрузке, и после каждого клиент-перехода).
       document.documentElement.classList.add('js');
 
-      // Волна M: триггер flip-волны логотипа шапки — первая нота до hero
-      // (двойной rAF: transition стартует после первой отрисовки)
-      const logo = document.querySelector('.logo');
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => logo?.classList.add('logo-in'));
-      });
+      window.addEventListener(
+        'scroll',
+        () => {
+          document
+            .querySelector('.site-header')
+            ?.classList.toggle('is-scrolled', window.scrollY > 30);
+        },
+        { passive: true },
+      );
 
-      const header = document.querySelector('.site-header');
-      const onScrollState = () =>
-        header?.classList.toggle('is-scrolled', window.scrollY > 30);
-      onScrollState();
-      window.addEventListener('scroll', onScrollState, { passive: true });
-
-      // Плавный скролл по якорям той же страницы
-      const path = window.location.pathname.replace(/\/+$/, '');
-      document.querySelectorAll<HTMLAnchorElement>('a[href*="#"]').forEach((a) => {
+      // Плавные якоря — делегирование на document (переживает свапы DOM, без дублей)
+      document.addEventListener('click', (e) => {
+        const a = (e.target as HTMLElement | null)?.closest?.('a[href*="#"]') as HTMLAnchorElement | null;
+        if (!a) return;
         const url = new URL(a.href);
-        const targetPath = url.pathname.replace(/\/+$/, '');
-        if (!url.hash || targetPath !== path) return;
-        a.addEventListener('click', (e) => {
-          const target = document.getElementById(url.hash.slice(1));
-          if (!target) return;
-          e.preventDefault();
-          target.scrollIntoView({
-            behavior: reduceMotion().matches ? 'auto' : 'smooth',
-          });
-          history.replaceState(null, '', url.hash);
+        if (!url.hash) return;
+        if (url.pathname.replace(/\/+$/, '') !== window.location.pathname.replace(/\/+$/, '')) return;
+        const target = document.getElementById(url.hash.slice(1));
+        if (!target) return;
+        e.preventDefault();
+        target.scrollIntoView({
+          behavior: reduceMotion().matches ? 'auto' : 'smooth',
         });
+        history.replaceState(null, '', url.hash);
       });
+
+      let footerIO: IntersectionObserver | null = null;
+
+      function initBase() {
+        // Волна M: триггер flip-волны логотипа шапки — первая нота до hero
+        // (двойной rAF: transition стартует после первой отрисовки)
+        const logo = document.querySelector('.logo');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => logo?.classList.add('logo-in'));
+        });
+
+        document
+          .querySelector('.site-header')
+          ?.classList.toggle('is-scrolled', window.scrollY > 30);
 
       // SVG-линия подчёркивания под ссылками nav и подписями карточек
       document.querySelectorAll('.site-nav a, .work-card figcaption').forEach((el) => {
@@ -108,24 +126,31 @@ const logoSpans = [...LOGO]
         el.appendChild(svg);
       });
 
-      // Футер: мягкий fade-up + прорисовка линии при входе в вьюпорт
-      const footer = document.querySelector('.site-footer');
-      if (footer && 'IntersectionObserver' in window) {
-        const io = new IntersectionObserver(
-          (entries) => {
-            for (const e of entries) {
-              if (e.isIntersecting) {
-                e.target.classList.add('is-in');
-                io.disconnect();
+        // Футер: мягкий fade-up + прорисовка линии при входе в вьюпорт
+        // (IO пересоздаётся на каждый page-load: старый гасим, DOM после свапа новый)
+        footerIO?.disconnect();
+        const footer = document.querySelector('.site-footer');
+        if (footer && 'IntersectionObserver' in window) {
+          footerIO = new IntersectionObserver(
+            (entries) => {
+              for (const e of entries) {
+                if (e.isIntersecting) {
+                  e.target.classList.add('is-in');
+                  footerIO?.disconnect();
+                  footerIO = null;
+                }
               }
-            }
-          },
-          { threshold: 0.25 },
-        );
-        io.observe(footer);
-      } else {
-        footer?.classList.add('is-in');
+            },
+            { threshold: 0.25 },
+          );
+          footerIO.observe(footer);
+        } else {
+          footer?.classList.add('is-in');
+        }
       }
+
+      document.addEventListener('astro:page-load', initBase);
+      initBase();
     </script>
   </body>
 </html>
