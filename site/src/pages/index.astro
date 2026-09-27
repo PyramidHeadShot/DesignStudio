@@ -31,6 +31,9 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     <div class="work-grid">
       {cases.map((c, i) => (
         <a class="work-card" href={`${base}/cases/${c.id}/`} data-category={c.data.category}>
+          {/* Волна J: внутренняя tilt-обёртка — наклон пишет только она, внешняя
+              карточка остаётся под управлением reveal/FLIP-трансформ (без конфликтов) */}
+          <div class="tilt">
           <figure style="margin:0">
             <div class="thumb">
               {c.data.cover ? (
@@ -51,6 +54,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
               {c.data.title} <span>— {c.data.category}{c.data.year ? `, ${c.data.year}` : ''}</span>
             </figcaption>
           </figure>
+          </div>
         </a>
       ))}
     </div>
@@ -63,7 +67,7 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     // 2) FLIP-фильтр — First/Last/Invert/Play вручную (transform-only);
     // 3) карточки ниже вьюпорта — reveal по IntersectionObserver через animate().
     // Все эффекты замораживаются при prefers-reduced-motion (полный freeze).
-    import { animate, createTimeline, createScope, stagger, utils } from 'animejs';
+    import { animate, createAnimatable, createTimeline, createScope, stagger, utils } from 'animejs';
     import { splitWords, reduceMotion } from '../scripts/lib';
 
     document.documentElement.classList.add('js');
@@ -155,6 +159,14 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
         btn.addEventListener('click', () => {
           if (filtering) return;
           const cat = btn.dataset.category ?? 'all';
+          // Волна J: при перестроении сетки наклон карточек сбрасывается к нулю
+          // (tilt на внутренней обёртке, поэтому FLIP-трансформы не конфликтуют)
+          cards.forEach((el) => {
+            const t = (el as any).__tilt as { rotateX: (v: number) => void; rotateY: (v: number) => void; translateX: (v: number) => void; translateY: (v: number) => void } | undefined;
+            t?.rotateX(0); t?.rotateY(0); t?.translateX(0); t?.translateY(0);
+            const zone = el.querySelector<HTMLElement>('.tilt');
+            if (zone) zone.style.willChange = '';
+          });
           filterBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
 
           const first = new Map(cards.map((el) => [el, el.getBoundingClientRect()]));
@@ -229,6 +241,45 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
           }
         });
       });
+
+      // --- Волна J: hover-tilt карточек (демо №11, createAnimatable — chained-twins) ---
+      // Наклон/смещение пишет только внутренняя .tilt-обёртка (transform-only);
+      // зум обложки — прежний CSS-scale внутри .thumb. Только мышь с hover;
+      // при prefers-reduced-motion тилт не навешивается; без JS — как раньше.
+      // Rect кэшируется на pointerenter (без layout-чтений в move), will-change
+      // ставится на входе и снимается на выходе.
+      const fineHover = window.matchMedia('(hover: hover) and (pointer: fine)');
+      if (!frozen() && fineHover.matches) {
+        cards.forEach((card) => {
+          const zone = card.querySelector<HTMLElement>('.tilt');
+          if (!zone) return;
+          const rot = createAnimatable(zone, {
+            rotateX: 400, rotateY: 400, translateX: 400, translateY: 400, // возврат/догон ~400 мс
+            ease: 'out(3)',
+          });
+          (card as any).__tilt = rot; // используется для сброса в FLIP-фильтре
+          let rect: DOMRect | null = null;
+          card.addEventListener('pointerenter', () => {
+            if (frozen()) return;
+            rect = card.getBoundingClientRect();
+            if (zone.style.willChange !== 'transform') zone.style.willChange = 'transform';
+          }, { passive: true });
+          card.addEventListener('pointermove', (e) => {
+            if (frozen() || !rect) return;
+            const x = (e.clientX - rect.left) / rect.width - 0.5;  // −0.5..0.5
+            const y = (e.clientY - rect.top) / rect.height - 0.5;
+            rot.rotateY(x * 14);   // до ±7°
+            rot.rotateX(-y * 12);  // до ±6°
+            rot.translateX(x * 8); // до ±4px
+            rot.translateY(y * 6);
+          }, { passive: true });
+          card.addEventListener('pointerleave', () => {
+            rect = null;
+            zone.style.willChange = '';
+            rot.rotateX(0); rot.rotateY(0); rot.translateX(0); rot.translateY(0); // плавный возврат 400 мс
+          });
+        });
+      }
 
       return () => io?.disconnect();
     });

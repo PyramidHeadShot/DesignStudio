@@ -144,6 +144,10 @@ html.js .work-filters {
   padding: 0 var(--pad);
 }
 .work-card { display: block; }
+/* Волна J: tilt карточек (№11) — перспектива на внешней карточке; сам наклон
+   пишет только внутренняя .tilt (JS), зум обложки — прежний scale внутри .thumb */
+.work-card { perspective: 900px; }
+.tilt { transform-style: preserve-3d; }
 .thumb {
   position: relative;
   aspect-ratio: 4 / 3;
