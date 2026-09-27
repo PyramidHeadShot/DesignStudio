@@ -21,7 +21,8 @@ const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
     <meta name="description" content={SITE.heroText} />
     <!-- preload основного subset'а (кириллица — язык сайта) -->
     <link rel="preload" as="font" type="font/woff2" href={cyrFont} crossorigin />
-  </head>
+      <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
+</head>
   <body>
     <header class="site-header">
       <a class="logo" href={`${base}/`}>{SITE.name}</a>

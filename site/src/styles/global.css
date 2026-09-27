@@ -18,6 +18,21 @@
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Metric-compatible fallback для font swap (fix CLS/FOUT): метрики сняты
+   с фактических файлов (fontkit): Inter Tight upm 2048, hhea ascent 1984 /
+   descent -494 / lineGap 0; средний advance по набору кириллица+латиница
+   против Arial → size-adjust 91.97%. Override'ы нормированы на size-adjust. */
+@font-face {
+  font-family: 'Inter Tight Fallback';
+  font-style: normal;
+  font-weight: 400 700;
+  src: local('Arial');
+  size-adjust: 91.97%;
+  ascent-override: 105.33%;
+  descent-override: 26.23%;
+  line-gap-override: 0%;
+}
+
 :root {
   /* Палитра: оттенки сиреневого (заказчик, волна F). Контраст: ink/bg ~15:1,
      muted/bg ~5.1:1, accent/bg ~4.8:1 — WCAG AA выдержан */
@@ -43,7 +58,7 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-ink);
-  font-family: 'Inter Tight', system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-family: 'Inter Tight', 'Inter Tight Fallback', system-ui, 'Helvetica Neue', Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.45;
 }
@@ -155,7 +170,10 @@ html.js .work-filters {
 .work-card:hover figcaption { text-decoration-color: currentColor; }
 .work-card figcaption span { color: var(--muted); }
 
-/* --- Страница кейса: задача → процесс → результат, крупные изображения --- */
+/* --- Страница кейса: задача → процесс → результат, крупные изображения ---
+   CLS: явный line-height у заголовка — разбиение на слова (.w/.wi) и swap
+   шрифта не меняют высоту строк (inline-block .w наследует ту же метрику). */
+.case-head h1 { line-height: 1.45; } /* равно унаследованному 1.45 — фиксируем, чтобы swap и сплит не меняли высоту строк; 1.45 ≥ 1.21em (ink box) — выносные в масках .w не обрезаются */
 .case-hero {
   display: block;
   width: 100%;
@@ -165,7 +183,7 @@ html.js .work-filters {
 .case-body img {
   display: block;
   width: 100%;
-  height: auto;
+  height: auto; /* aspect-ratio берётся из width/height атрибутов astro:assets — места резервируются до загрузки */
 }
 
 /* --- Микроанимации (правило 4): только transform/opacity ---
@@ -206,8 +224,9 @@ html.js .case-head h1.is-in .wi { opacity: 1; transform: none; }
 
 /* --- SVG-линии-акценты (nav, подписи карточек, навигация кейса):
    stroke-dashoffset draw на hover/focus; инъекция — в скрипте Base */
-.uline { display: block; width: 100%; height: 2px; margin-top: 3px; overflow: visible; }
-html.js .site-nav .uline { display: inline-block; margin: 0; }
+.site-nav a, .work-card figcaption, .case-nav a { position: relative; }
+.uline { position: absolute; left: 0; bottom: -4px; width: 100%; height: 2px; margin: 0;
+  display: block; overflow: visible; pointer-events: none; }
 .uline line { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 100; stroke-dashoffset: 0; }
 html.js .uline line { stroke-dashoffset: 100; transition: stroke-dashoffset 0.35s ease; }
 html.js .site-nav a:hover .uline line,
