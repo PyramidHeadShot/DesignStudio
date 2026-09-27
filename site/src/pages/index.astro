@@ -57,41 +57,180 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
   </section>
 
   <script>
-    // Scroll-reveal карточек: включаем скрытие только после подтверждения JS
-    // (класс на <html>) — без JS сетка полностью видна (progressive enhancement).
-    document.documentElement.classList.add('js');
-    const cards = document.querySelectorAll('.work-card');
-    if (!('IntersectionObserver' in window)) {
-      cards.forEach((c) => c.classList.add('is-visible'));
-    } else {
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (e.isIntersecting) {
-              e.target.classList.add('is-visible');
-              io.unobserve(e.target);
-            }
-          }
-        },
-        { threshold: 0.15 },
-      );
-      cards.forEach((c, i) => {
-        (c as HTMLElement).style.transitionDelay = `${Math.min(i * 60, 360)}ms`;
-        io.observe(c);
-      });
-    }
+    // Motion-слой главной (anime.js v4, .agents/skills/animejs/):
+    // 1) кинетический hero — заголовок по словам (маска + translateY, stagger),
+    //    затем подзаголовок, строка фильтров, сетка — одна timeline-хореография;
+    // 2) FLIP-фильтр — First/Last/Invert/Play вручную (transform-only);
+    // 3) карточки ниже вьюпорта — reveal по IntersectionObserver через animate().
+    // Все эффекты замораживаются при prefers-reduced-motion (полный freeze).
+    import { animate, createTimeline, createScope, stagger, utils } from 'animejs';
+    import { splitWords, reduceMotion } from '../scripts/lib';
 
-    // Фильтр сетки по дисциплинам: скрытие/показ только по клику —
-    // без JS карточки никогда не скрываются (full grid по умолчанию)
-    const filters = document.querySelectorAll<HTMLButtonElement>('.work-filter');
-    filters.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const cat = btn.dataset.category ?? 'all';
-        filters.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
-        cards.forEach((card) => {
-          (card as HTMLElement).hidden = cat !== 'all' && card.dataset.category !== cat;
+    document.documentElement.classList.add('js');
+
+    const cards = [...document.querySelectorAll<HTMLElement>('.work-card')];
+    const filterBtns = [...document.querySelectorAll<HTMLButtonElement>('.work-filter')];
+    const filtersRow = document.querySelector<HTMLElement>('.work-filters');
+    let io: IntersectionObserver | null = null;
+    let filtering = false; // защита от спама кликами во время перехода
+
+    createScope({
+      mediaQueries: { reduce: '(prefers-reduced-motion: reduce)' },
+    }).add((self) => {
+      const frozen = () => self.matches.reduce || reduceMotion().matches;
+
+      // --- Кинетический hero: единый ритм 400–600 мс, ease outQuint ---
+      const h1 = document.querySelector<HTMLElement>('.hero h1');
+      const sub = document.querySelector<HTMLElement>('.hero p');
+      let words: HTMLElement[] = [];
+
+      if (!frozen()) {
+        // стартовые состояния — только из JS (без JS всё видно)
+        if (h1) words = splitWords(h1);
+        const vh = window.innerHeight;
+        const above = cards.filter((el) => el.getBoundingClientRect().top < vh);
+        const below = cards.filter((el) => el.getBoundingClientRect().top >= vh);
+
+        utils.set(words, { translateY: '115%' });
+        if (sub) utils.set(sub, { opacity: 0, translateY: 16 });
+        if (filtersRow) utils.set(filtersRow, { opacity: 0, translateY: 12 });
+        utils.set(cards, { opacity: 0, translateY: 24 });
+
+        const tl = createTimeline({ defaults: { ease: 'outQuint' } });
+        if (words.length)
+          tl.add(words, {
+            translateY: ['115%', '0%'],
+            duration: 520,
+            delay: stagger(100),
+          });
+        if (sub)
+          tl.add(sub, { opacity: [0, 1], translateY: [16, 0], duration: 480 }, '-=220');
+        if (filtersRow)
+          tl.add(filtersRow, { opacity: [0, 1], translateY: [12, 0], duration: 420 }, '-=260');
+        if (above.length)
+          tl.add(
+            above,
+            {
+              opacity: [0, 1],
+              translateY: [24, 0],
+              duration: 520,
+              delay: stagger(70),
+            },
+            '-=260',
+          );
+
+        // карточки ниже вьюпорта — reveal при попадании в видимость
+        if (below.length) {
+          if ('IntersectionObserver' in window) {
+            io = new IntersectionObserver(
+              (entries) => {
+                for (const e of entries) {
+                  if (!e.isIntersecting || frozen()) continue;
+                  animate(e.target, {
+                    opacity: [0, 1],
+                    translateY: [24, 0],
+                    duration: 520,
+                    ease: 'outQuint',
+                  });
+                  io.unobserve(e.target);
+                }
+              },
+              { threshold: 0.15 },
+            );
+            below.forEach((c) => io!.observe(c));
+          } else {
+            animate(below, {
+              opacity: [0, 1],
+              translateY: [24, 0],
+              duration: 520,
+              ease: 'outQuint',
+              delay: stagger(60),
+            });
+          }
+        }
+      }
+
+      // --- FLIP-фильтр: aria-pressed и скрытие — как раньше, перестройка — FLIP ---
+      filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          if (filtering) return;
+          const cat = btn.dataset.category ?? 'all';
+          filterBtns.forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+
+          const first = new Map(cards.map((el) => [el, el.getBoundingClientRect()]));
+          const leaving: HTMLElement[] = [];
+          const entering: HTMLElement[] = [];
+          const staying: HTMLElement[] = [];
+          for (const el of cards) {
+            const show = cat === 'all' || el.dataset.category === cat;
+            if (!el.hidden && !show) leaving.push(el);
+            if (el.hidden && show) entering.push(el);
+            if (show) staying.push(el);
+          }
+
+          if (frozen()) {
+            // мгновенно: только скрытие/показ (текущее поведение)
+            cards.forEach((el) => {
+              el.hidden = !staying.includes(el);
+            });
+            return;
+          }
+          filtering = true;
+
+          const afterLeave = () => {
+            filtering = false;
+            leaving.forEach((el) => {
+              el.hidden = true;
+              el.style.opacity = '';
+              el.style.transform = '';
+            });
+            entering.forEach((el) => {
+              el.hidden = false;
+              utils.set(el, { opacity: 0, translateY: 20, scale: 0.98 });
+            });
+            // FLIP остающихся: к новым позициям (transform-only, 450 мс outQuart)
+            staying.forEach((el) => {
+              const f = first.get(el);
+              if (!f) return;
+              const l = el.getBoundingClientRect();
+              const dx = f.left - l.left;
+              const dy = f.top - l.top;
+              if (Math.abs(dx) > 1 || Math.abs(dy) > 1)
+                animate(el, {
+                  translateX: [dx, 0],
+                  translateY: [dy, 0],
+                  duration: 450,
+                  ease: 'outQuart',
+                });
+            });
+            // входящие: fade-up со stagger
+            if (entering.length)
+              animate(entering, {
+                opacity: [0, 1],
+                translateY: [20, 0],
+                scale: [0.98, 1],
+                duration: 420,
+                ease: 'outQuart',
+                delay: stagger(40),
+              });
+          };
+
+          if (leaving.length) {
+            // уходящие растворяются + scale .95 (stagger 40)
+            animate(leaving, {
+              opacity: [1, 0],
+              scale: [1, 0.95],
+              duration: 260,
+              ease: 'inOut(2)',
+              delay: stagger(40),
+            }).then(afterLeave);
+          } else {
+            afterLeave();
+          }
         });
       });
+
+      return () => io?.disconnect();
     });
   </script>
 </Base>

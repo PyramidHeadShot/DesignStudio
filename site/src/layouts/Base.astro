@@ -8,6 +8,8 @@ const { title = SITE.name } = Astro.props;
 const year = new Date().getFullYear();
 // BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio); нормализуем слэш
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+// tel: без пробелов
+const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
 ---
 
 <!doctype html>
@@ -32,8 +34,83 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       <slot />
     </main>
     <footer class="site-footer" id="contact">
+      <!-- Разделительная линия прорисовывается при появлении (SVG draw, stroke-dashoffset) -->
+      <svg class="rule" aria-hidden="true" preserveAspectRatio="none">
+        <line x1="0" y1="0.5" x2="100%" y2="0.5" pathLength="100" />
+      </svg>
       <span>© {year} DesignStudio</span>
-      <span>{SITE.email} · {SITE.phone}</span> <!-- ЗАГЛУШКА -->
+      <span class="site-contacts">
+        <a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={`tel:${phoneHref}`}>{SITE.phone}</a>
+      </span> <!-- ЗАГЛУШКА -->
     </footer>
+    <script>
+      // Шапка: sticky-состояние после 30px скролла (фон/бордер через CSS-transition).
+      // Скролл к якорям — плавный, с уважением prefers-reduced-motion.
+      // Разделитель футера прорисовывается при входе в вьюпорт (IntersectionObserver).
+      // underline-акценты (nav/подписи карточек) — SVG-линии со stroke-dashoffset:
+      // чистый CSS-hover после одноразовой инъекции, без библиотеки на странице кейса.
+      import { reduceMotion } from '../scripts/lib';
+
+      document.documentElement.classList.add('js');
+
+      const header = document.querySelector('.site-header');
+      const onScrollState = () =>
+        header?.classList.toggle('is-scrolled', window.scrollY > 30);
+      onScrollState();
+      window.addEventListener('scroll', onScrollState, { passive: true });
+
+      // Плавный скролл по якорям той же страницы
+      const path = window.location.pathname.replace(/\/+$/, '');
+      document.querySelectorAll<HTMLAnchorElement>('a[href*="#"]').forEach((a) => {
+        const url = new URL(a.href);
+        const targetPath = url.pathname.replace(/\/+$/, '');
+        if (!url.hash || targetPath !== path) return;
+        a.addEventListener('click', (e) => {
+          const target = document.getElementById(url.hash.slice(1));
+          if (!target) return;
+          e.preventDefault();
+          target.scrollIntoView({
+            behavior: reduceMotion().matches ? 'auto' : 'smooth',
+          });
+          history.replaceState(null, '', url.hash);
+        });
+      });
+
+      // SVG-линия подчёркивания под ссылками nav и подписями карточек
+      document.querySelectorAll('.site-nav a, .work-card figcaption').forEach((el) => {
+        if (el.querySelector('.uline')) return;
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'uline');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('preserveAspectRatio', 'none');
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', '0');
+        line.setAttribute('y1', '0.75');
+        line.setAttribute('x2', '100%');
+        line.setAttribute('y2', '0.75');
+        line.setAttribute('pathLength', '100');
+        svg.appendChild(line);
+        el.appendChild(svg);
+      });
+
+      // Футер: мягкий fade-up + прорисовка линии при входе в вьюпорт
+      const footer = document.querySelector('.site-footer');
+      if (footer && 'IntersectionObserver' in window) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add('is-in');
+                io.disconnect();
+              }
+            }
+          },
+          { threshold: 0.25 },
+        );
+        io.observe(footer);
+      } else {
+        footer?.classList.add('is-in');
+      }
+    </script>
   </body>
 </html>

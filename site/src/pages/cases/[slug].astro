@@ -4,15 +4,28 @@ import { Image } from 'astro:assets';
 import Base from '../../layouts/Base.astro';
 
 export async function getStaticPaths() {
-  const cases = await getCollection('cases');
-  return cases.map((c) => ({ params: { slug: c.id }, props: { entry: c } }));
+  const cases = (await getCollection('cases')).sort(
+    (a, b) => a.data.order - b.data.order,
+  );
+  return cases.map((c, i) => ({ params: { slug: c.id }, props: { entry: c } }));
 }
 
 const { entry } = Astro.props;
 const { Content } = await render(entry);
+// Сосед по order из отсортированной коллекции: следующий, циклично (6 кейсов → 1-й)
+const cases = (await getCollection('cases')).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const idx = cases.findIndex((c) => c.id === entry.id);
+const next = cases[(idx + 1) % cases.length];
+// BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio)
+const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
 <Base title={`${entry.data.title} — DesignStudio`}>
+  <!-- Акцентная линия прогресса чтения сверху (scroll-linked scaleX, transform-only) -->
+  <div class="read-progress" aria-hidden="true"></div>
+
   <article class="container case">
     <header class="case-head">
       <h1>{entry.data.title}</h1>
@@ -34,5 +47,54 @@ const { Content } = await render(entry);
     <div class="case-body">
       <Content />
     </div>
+
+    <!-- Навигация между кейсами: назад на сетку / следующий кейс (циклично) -->
+    <nav class="case-nav" aria-label="Навигация по кейсам">
+      <a href={`${base}/`}>← все работы</a>
+      <a href={`${base}/cases/${next.id}/`}>Следующий кейс: {next.data.title} →</a>
+    </nav>
   </article>
+
+  <script>
+    // Страница кейса — минимум JS: прогресс-линия (rAF, transform scaleX)
+    // и кинетический заголовок по словам (маска + CSS-transition со stagger-задержками).
+    // Без библиотеки анимаций (budget), при prefers-reduced-motion — мгновенно.
+    import { splitWords, reduceMotion } from '../../scripts/lib';
+
+    document.documentElement.classList.add('js');
+
+    // --- Прогресс чтения ---
+    const bar = document.querySelector<HTMLElement>('.read-progress');
+    let ticking = false;
+    const updateProgress = () => {
+      ticking = false;
+      if (!bar) return;
+      const max = document.documentElement.scrollHeight - window.innerHeight;
+      const p = max > 0 ? Math.min(Math.max(window.scrollY / max, 0), 1) : 0;
+      bar.style.transform = `scaleX(${p})`;
+    };
+    window.addEventListener(
+      'scroll',
+      () => {
+        if (!ticking) {
+          ticking = true;
+          requestAnimationFrame(updateProgress);
+        }
+      },
+      { passive: true },
+    );
+    updateProgress();
+
+    // --- Заголовок по словам (при reduce — не разбиваем: DOM остаётся pristine) ---
+    const h1 = document.querySelector<HTMLElement>('.case-head h1');
+    if (h1 && !reduceMotion().matches) {
+      const words = splitWords(h1);
+      words.forEach((w, i) => {
+        (w.style as CSSStyleDeclaration).transitionDelay = `${i * 70}ms`;
+      });
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => h1.classList.add('is-in'));
+      });
+    }
+  </script>
 </Base>
