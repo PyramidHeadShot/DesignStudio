@@ -161,6 +161,9 @@ html.js .work-filters {
   font-size: 14px;
   color: var(--muted);
   cursor: pointer;
+  display: inline-flex; /* Волна L: иконка + текст */
+  align-items: center;
+  gap: 8px;
   text-decoration: underline;
   text-decoration-color: transparent;
   text-decoration-thickness: 1px;
@@ -171,6 +174,27 @@ html.js .work-filters {
 .work-filter[aria-pressed='true'] {
   color: var(--accent); /* единственный акцент — активное состояние (правило 5) */
   text-decoration-color: currentColor;
+}
+
+/* Волна L: draw-иконки фильтров (демо №13). Техника — CSS stroke-dashoffset
+   с pathLength=100 (как у uline): декоративный триггерный эффект без весовых
+   затрат, анимируется свойство, не влияющее на layout. Без JS и при reduce
+   иконки статично нарисованы (скрытие гейтится html.js + no-preference). */
+.ficon { flex: none; }
+.ficon :is(path, rect, circle) { stroke-dasharray: 100; stroke-dashoffset: 0; }
+@media (prefers-reduced-motion: no-preference) {
+  /* до триггера контур скрыт (только при JS и без reduce) */
+  html.js .work-filters:not(.icons-drawn) .ficon :is(path, rect, circle) { stroke-dashoffset: 100; }
+  .ficon :is(path, rect, circle) { transition: stroke-dashoffset .55s cubic-bezier(.22, 1, .36, 1); }
+  /* stagger прорисовки по кнопкам 70 мс (Все рисуется сразу с появлением) */
+  .work-filters .work-filter:nth-child(2) .ficon :is(path, rect, circle) { transition-delay: 70ms; }
+  .work-filters .work-filter:nth-child(3) .ficon :is(path, rect, circle) { transition-delay: 140ms; }
+  .work-filters .work-filter:nth-child(4) .ficon :is(path, rect, circle) { transition-delay: 210ms; }
+  .work-filters .work-filter:nth-child(5) .ficon :is(path, rect, circle) { transition-delay: 280ms; }
+  .work-filters .work-filter:nth-child(6) .ficon :is(path, rect, circle) { transition-delay: 350ms; }
+  /* повторная прорисовка при наведении (restart через animation) */
+  @keyframes ficon-draw { from { stroke-dashoffset: 100; } to { stroke-dashoffset: 0; } }
+  html.js .work-filter:hover .ficon :is(path, rect, circle) { animation: ficon-draw .45s cubic-bezier(.22, 1, .36, 1); }
 }
 .work-filter:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .work-card[hidden] { display: none; } /* display:block карточки иначе перебивает [hidden] */
