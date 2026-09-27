@@ -10,6 +10,12 @@ const year = new Date().getFullYear();
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 // tel: без пробелов
 const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
+// Волна M: посимвольная разметка логотипа для flip-волны (демо №02): маски .lm
+// с буквами .li; aria-label у контейнера, буквы aria-hidden (скринридер — один раз)
+const LOGO = 'DesignStudio';
+const logoSpans = [...LOGO]
+  .map((ch) => `<span class="lm" aria-hidden="true"><span class="li">${ch}</span></span>`)
+  .join('');
 ---
 
 <!doctype html>
@@ -25,7 +31,8 @@ const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
 </head>
   <body>
     <header class="site-header">
-      <a class="logo" href={`${base}/`}>{SITE.name}</a>
+      <!-- Волна M: логотип — буквы в масках (без JS видны как обычный текст; a11y: aria-label) -->
+      <a class="logo" href={`${base}/`} aria-label={LOGO}><Fragment set:html={logoSpans} /></a>
       <nav class="site-nav" aria-label="Основная навигация">
         <a href={`${base}/`}>Работы</a>
         <a href={`${base}/#contact`}>Контакты</a>
@@ -39,7 +46,7 @@ const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
       <svg class="rule" aria-hidden="true" preserveAspectRatio="none">
         <line x1="0" y1="0.5" x2="100%" y2="0.5" pathLength="100" />
       </svg>
-      <span>© {year} DesignStudio</span>
+      <span>© {year} <span class="fw" aria-label={LOGO}><Fragment set:html={logoSpans} /></span></span>
       <span class="site-contacts">
         <a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={`tel:${phoneHref}`}>{SITE.phone}</a>
       </span> <!-- ЗАГЛУШКА -->
@@ -53,6 +60,13 @@ const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
       import { reduceMotion } from '../scripts/lib';
 
       document.documentElement.classList.add('js');
+
+      // Волна M: триггер flip-волны логотипа шапки — первая нота до hero
+      // (двойной rAF: transition стартует после первой отрисовки)
+      const logo = document.querySelector('.logo');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => logo?.classList.add('logo-in'));
+      });
 
       const header = document.querySelector('.site-header');
       const onScrollState = () =>
