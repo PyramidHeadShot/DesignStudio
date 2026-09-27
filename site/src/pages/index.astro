@@ -9,6 +9,16 @@ const cases = (await getCollection('cases')).sort(
 );
 // Категории (дисциплины) в порядке первых вхождений — для строки фильтров
 const categories = [...new Set(cases.map((c) => c.data.category))];
+// Волна P: счётчик работ у фильтра (демо №17) — статичный текст в HTML и
+// клиентский пересчёт: правильное склонение по-русски (1 работа / 2 работы / 5 работ)
+const total = cases.length;
+const pluralWorks = (n: number) => {
+  const m10 = n % 10;
+  const m100 = n % 100;
+  const word =
+    m10 === 1 && m100 !== 11 ? 'работа' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 'работы' : 'работ';
+  return `${n} ${word}`;
+};
 // BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio)
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 // Волна K: marquee-тикер подзаголовка героя (демо №20). Количество повторов
@@ -53,6 +63,12 @@ const ICONS: Record<string, string> = {
   <section aria-label="Портфолио">
     {/* Фильтр — island; без JS скрыт (см. CSS), сетка показана полностью */}
     <div class="work-filters" role="group" aria-label="Фильтр работ по дисциплинам">
+      <!-- Волна P: счётчик видимых работ (.n — визуал, aria-hidden; .vh — скрытая
+           aria-live-объявление, обновляется один раз по завершении анимации) -->
+      <p class="work-count" data-v={total}>
+        <span class="n" aria-hidden="true">{pluralWorks(total)}</span>
+        <span class="vh" aria-live="polite">{pluralWorks(total)}</span>
+      </p>
       <button type="button" class="work-filter" data-category="all" aria-pressed="true">
         <svg class="ficon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><Fragment set:html={ICONS.all} /></svg>Все
       </button>
@@ -119,6 +135,46 @@ const ICONS: Record<string, string> = {
     let io: IntersectionObserver | null = null;
     let filtering = false; // защита от спама кликами во время перехода
 
+    // --- Волна P: счётчик работ (демо №17). Техника — anime.js (уже в чанке
+    // главной, общий rAF-цикл с FLIP/hero — нулевой добавочный вес) ---
+    const countEl = document.querySelector<HTMLElement>('.work-count');
+    const plural = (n: number) => {
+      const m10 = n % 10;
+      const m100 = n % 100;
+      return m10 === 1 && m100 !== 11
+        ? `${n} работа`
+        : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)
+          ? `${n} работы`
+          : `${n} работ`;
+    };
+    const setVisual = (n: number) => {
+      if (!countEl) return;
+      countEl.dataset.v = String(n);
+      const vis = countEl.querySelector('.n');
+      if (vis) vis.textContent = plural(n);
+    };
+    const announce = (n: number) => {
+      const vh = countEl?.querySelector('.vh');
+      if (vh) vh.textContent = plural(n); // SR-объявление — один раз, без спама
+    };
+    const countTo = (target: number, duration: number, from?: number) => {
+      if (!countEl) return;
+      if (reduceMotion().matches) {
+        setVisual(target);
+        announce(target);
+        return;
+      }
+      const start = from ?? Number(countEl.dataset.v ?? total);
+      const o = { v: start };
+      animate(o, {
+        v: target,
+        duration,
+        ease: 'out(3)',
+        onUpdate: () => setVisual(Math.round(o.v)),
+        onComplete: () => announce(target),
+      });
+    };
+
     createScope({
       mediaQueries: { reduce: '(prefers-reduced-motion: reduce)' },
     }).add((self) => {
@@ -157,8 +213,12 @@ const ICONS: Record<string, string> = {
               opacity: [0, 1],
               translateY: [12, 0],
               duration: 420,
-              // Волна L: со стартом появления строки — класс-триггер прорисовки иконок (CSS-draw со stagger)
-              onBegin: () => filtersRow?.classList.add('icons-drawn'),
+              // Волна L: со стартом п��явления строки — класс-триггер прорисовки иконок (CSS-draw со stagger)
+              // Волна P: там же — count-up 0 → N (единый ритм появления)
+              onBegin: () => {
+                filtersRow?.classList.add('icons-drawn');
+                countTo(total, 700, 0);
+              },
             },
             '-=260',
           );
@@ -230,6 +290,7 @@ const ICONS: Record<string, string> = {
             if (el.hidden && show) entering.push(el);
             if (show) staying.push(el);
           }
+          countTo(staying.length, 250); // Волна P: пересчёт счётчика к числу видимых
 
           if (frozen()) {
             // мгновенно: только скрытие/показ (текущее поведение)
