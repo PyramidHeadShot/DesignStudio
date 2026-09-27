@@ -20,7 +20,7 @@
 | Слой | Технология |
 |------|-----------|
 | Язык | TypeScript (strict) в Astro-компонентах |
-| Frontend | Astro 5 (static), MDX для кейсов; JS — только точечные islands (план: фильтр сетки) |
+| Frontend | Astro 5 (static), MDX для кейсов; JS — точечные islands (фильтр сетки); motion-слой — anime.js (правило 4 design-principles.md) |
 | Стили | чистый CSS Grid, без Tailwind/UI-библиотек |
 | Backend | нет — статика |
 | БД | нет — контент кейсов: MDX-файлы в `site/src/content/cases/` |
