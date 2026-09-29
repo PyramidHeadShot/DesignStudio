@@ -1,5 +1,5 @@
 /* Песочница анимаций — ТОЛЬКО страница /dev/animations/, сайт не затрагивает.
-   Палитра и шрифт — из global.css (сиреневая волна F). Все демо — transform/
+   Палитра и шрифт — из global.css (синяя волна U). Все демо — transform/
    opacity (исключение: №07 filter blur по ТЗ). Без JS всё видно (статичные
    конечные состояния), начальные состояния ставит только JS. */
 
@@ -170,9 +170,9 @@ section > h2 {
 }
 .tile[hidden] { display: none; }
 .t-a { background: var(--color-accent); }
-.t-b { background: #8B72FF; }
+.t-b { background: #3E6FE4; }
 .t-c { background: var(--color-accent-strong); }
-.t-d { background: #A78BFF; color: var(--color-ink); }
+.t-d { background: #7FA0F0; color: var(--color-ink); }
 .t-e { background: var(--color-selection); color: var(--color-ink); }
 .t-f { background: var(--color-ink); }
 .flrow { display: flex; flex-wrap: wrap; gap: 4px 14px; }

@@ -34,16 +34,16 @@
 }
 
 :root {
-  /* Палитра: оттенки сиреневого (заказчик, волна F). Контраст: ink/bg ~15:1,
+  /* Палитра: оттенки синего (заказчик, волна F). Контраст: ink/bg ~15:1,
      muted/bg ~5.1:1, accent/bg ~4.8:1 — WCAG AA выдержан */
-  --color-bg: #F7F5FB;            /* сиреневый туман — базовый фон */
+  --color-bg: #F4F7FC;            /* холодный туман — базовый фон (волна U, фирменный синий) */
   --color-surface: #FFFFFF;       /* поверхности (карточки) */
-  --color-ink: #231C33;           /* сиреневый графит — тексты */
-  --color-ink-muted: #6E6384;     /* приглушённый текст */
-  --color-line: #E4DFF0;          /* линии/бордеры/плейсхолдеры */
-  --color-accent: #6D4AFF;        /* насыщенный сиреневый — ЕДИНСТВЕННЫЙ яркий */
-  --color-accent-strong: #5433E0; /* hover/strong акцент */
-  --color-selection: #DDD4FF;     /* выделение текста */
+  --color-ink: #0B2447;           /* тёмно-синий графит — тексты */
+  --color-ink-muted: #5A6B87;     /* приглушённый сине-серый */
+  --color-line: #D8E2F0;          /* линии/бордеры/плейсхолдеры */
+  --color-accent: #084ECE;        /* фирменный синий логотипа — ЕДИНСТВЕННЫЙ яркий */
+  --color-accent-strong: #033CB5; /* hover/strong акцент */
+  --color-selection: #CFE0FF;     /* выделение текста / светлые ссылки футера */
   /* Алиасы старых имён — селекторы не трогаем */
   --ink: var(--color-ink);
   --paper: var(--color-bg);
@@ -91,56 +91,55 @@ a:hover { color: var(--color-accent-strong); }
 .site-header.is-scrolled { border-bottom-color: var(--color-line); }
 .logo { font-size: clamp(24px, 4vw, 40px); font-weight: 700; letter-spacing: -0.02em; }
 
-/* Волна M: flip-волна логотипа (демо №02) в шапке и футере. Техника — CSS-транзишены
-   с классами-триггерами (html.js / .logo-in / .site-footer.is-in): триггеры уже есть,
-   рост JS ~0 (аниме.js в Base не тащим — декоративный эффект не требует движка). */
-.lm { display: inline-block; overflow: hidden; vertical-align: top; perspective: 420px; }
-.li { display: inline-block; }
-@media (prefers-reduced-motion: no-preference) {
-  /* старт: из маски + flip; без JS и при reduce — буквы видны (правило гейтится html.js) */
-  html.js .logo .li,
-  html.js .site-footer .fw .li {
-    opacity: 0;
-    transform: translateY(110%) rotateX(-60deg);
-    transition: transform .45s cubic-bezier(.22, 1, .36, 1), opacity .35s ease; /* outQuint-семейство */
-  }
-  html.js .logo.logo-in .li,
-  html.js .site-footer.is-in .fw .li { opacity: 1; transform: none; }
-  /* stagger 35 мс по 12 буквам (шапка и футер — общие задержки) */
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(2) .li { transition-delay: 35ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(3) .li { transition-delay: 70ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(4) .li { transition-delay: 105ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(5) .li { transition-delay: 140ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(6) .li { transition-delay: 175ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(7) .li { transition-delay: 210ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(8) .li { transition-delay: 245ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(9) .li { transition-delay: 280ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(10) .li { transition-delay: 315ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(11) .li { transition-delay: 350ms; }
-  html.js :is(.logo, .site-footer .fw) .lm:nth-child(12) .li { transition-delay: 385ms; }
-  /* hover шапки: мягкая повторная волна — animation срабатывает один раз за наведение */
-  @keyframes logo-wave {
-    from { opacity: 0; transform: translateY(110%) rotateX(-60deg); }
-    to { opacity: 1; transform: none; }
-  }
-  html.js .logo:hover .li { animation: logo-wave .5s cubic-bezier(.22, 1, .36, 1); }
-  html.js .logo:hover .lm:nth-child(2) .li { animation-delay: 25ms; }
-  html.js .logo:hover .lm:nth-child(3) .li { animation-delay: 50ms; }
-  html.js .logo:hover .lm:nth-child(4) .li { animation-delay: 75ms; }
-  html.js .logo:hover .lm:nth-child(5) .li { animation-delay: 100ms; }
-  html.js .logo:hover .lm:nth-child(6) .li { animation-delay: 125ms; }
-  html.js .logo:hover .lm:nth-child(7) .li { animation-delay: 150ms; }
-  html.js .logo:hover .lm:nth-child(8) .li { animation-delay: 175ms; }
-  html.js .logo:hover .lm:nth-child(9) .li { animation-delay: 200ms; }
-  html.js .logo:hover .lm:nth-child(10) .li { animation-delay: 225ms; }
-  html.js .logo:hover .lm:nth-child(11) .li { animation-delay: 250ms; }
-  html.js .logo:hover .lm:nth-child(12) .li { animation-delay: 275ms; }
+/* Волна T: логотип-картинка (замена текстового вордмарка и его буквенной волны).
+   Появление — opacity+scale по триггеру .logo-in (Base-скрипт);
+   hover — лёгкое приглушение; reduce/без JS — статика (гейт no-preference). */
+.logo-img { display: block; width: auto; height: 44px; border-radius: 8px; transition: opacity .2s ease; }
+.logo-foot {
+  display: inline-block;
+  width: auto;
+  height: 32px;
+  border-radius: 6px;
+  vertical-align: -10px;
+  margin-right: 10px;
 }
-.site-nav { display: flex; gap: 24px; font-size: 16px; }
+@media (prefers-reduced-motion: no-preference) {
+  html.js .logo {
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.4s ease-out, transform 0.4s ease-out;
+  }
+  html.js .logo.logo-in { opacity: 1; transform: none; }
+  html.js .logo:hover .logo-img { opacity: 0.85; }
+} { display: flex; gap: 24px; font-size: 16px; }
 html.js .site-nav a { display: inline-block; }
 
 /* Герой: крупная типографика вместо декора */
 .hero { padding: 0 var(--pad) var(--pad); }
+/* Волна T: фон заказчика позади hero-текста: absolute cover (CLS 0),
+   обработан на ассете (blur + hue в синий); сверху — градиент к --color-bg;
+   тексты/линия — z 1 над слоями фона */
+.hero { position: relative; }
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.18;
+  pointer-events: none;
+}
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(244, 247, 252, 0) 0%, rgba(244, 247, 252, 0.55) 80%, var(--color-bg) 100%);
+}
+.hero > *:not(.hero-bg) { position: relative; z-index: 1; }
 .hero h1 {
   margin: 0;
   font-size: clamp(36px, 8vw, 110px);
@@ -400,14 +399,14 @@ html.js .site-footer {
 }
 html.js .site-footer.is-in { opacity: 1; transform: none; }
 .site-footer .rule { display: block; width: 100%; height: 1px; }
-.site-footer .rule line { stroke: rgba(247, 245, 251, 0.25); stroke-width: 1; stroke-dasharray: 100; }
+.site-footer .rule line { stroke: rgba(244, 247, 252, 0.25); stroke-width: 1; stroke-dasharray: 100; }
 html.js .site-footer .rule line { transition: stroke-dashoffset 0.8s ease 0.1s; }
 html.js .site-footer:not(.is-in) .rule line { stroke-dashoffset: 100; }
 
 /* sticky-footer: основной блок растягивается, футер прижат к низу */
 body > main { flex: 1 0 auto; }
 
-/* Футер — инверсный блок: сиреневый туман на графите */
+/* Футер — инверсный блок: холодный туман на графите */
 .site-footer {
   margin-top: var(--pad);
   padding: var(--pad);
@@ -421,7 +420,7 @@ body > main { flex: 1 0 auto; }
 }
 
 /* Контакты футера — функциональные ссылки (AA на тёмном: светлая сирень) */
-.site-contacts a { text-decoration: underline; text-decoration-color: rgba(247, 245, 251, 0.35); text-underline-offset: 3px; }
+.site-contacts a { text-decoration: underline; text-decoration-color: rgba(207, 224, 255, 0.45); text-underline-offset: 3px; }
 .site-contacts a:hover { color: var(--color-selection); text-decoration-color: currentColor; }
 
 /* Видимый фокус на всех интерактивных ссылках */
