@@ -47,13 +47,7 @@ const ICONS: Record<string, string> = {
       <span class="ticker-static">{SITE.heroText}</span>
       <span class="ticker-viewport" aria-hidden="true">
         <span class="ticker-track">
-          {[0, 1].map((h) => (
-            <span class="ticker-g">
-              {Array.from({ length: TICKER_REPS }).map(() => (
-                <span class="ticker-u">{SITE.heroText} </span>
-              ))}
-            </span>
-          ))}
+          {[0, 1].map((h) => (<span class="ticker-g">{Array.from({ length: TICKER_REPS }).map(() => <span class="ticker-u">{SITE.heroText}</span>)}</span>))}
         </span>
       </span>
     </p>
