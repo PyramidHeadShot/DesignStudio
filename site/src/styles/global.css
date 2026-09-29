@@ -95,7 +95,15 @@ a:hover { color: var(--color-accent-strong); }
 /* Волна T: логотип-картинка (замена текстового вордмарка и его буквенной волны).
    Появление — opacity+scale по триггеру .logo-in (Base-скрипт);
    hover — лёгкое приглушение; reduce/без JS — статика (гейт no-preference). */
-.logo-img { display: block; width: auto; height: 44px; border-radius: 8px; transition: opacity .2s ease; }
+.logo { display: inline-flex; align-items: center; gap: 12px; }
+.logo-name {
+  font-weight: 700;
+  font-size: clamp(19px, 2.2vw, 26px);
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+  white-space: nowrap;
+}
+.logo-img { display: block; width: auto; height: 66px; border-radius: 10px; transition: opacity .2s ease; }
 .logo-foot {
   display: inline-block;
   width: auto;
