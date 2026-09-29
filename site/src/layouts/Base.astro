@@ -33,9 +33,12 @@ const wordmarkSpans = [...WORDMARK]
           var all = ['lm-1', 'lm-2', 'lm-3', 'lm-4'];
           all.forEach(function (c) { d.classList.remove(c); });
           var m = new URLSearchParams(location.search).get('lm');
-          if (m === '0') { localStorage.removeItem('lm'); return; }
-          if (m && m >= '1' && m <= '4') { d.classList.add('lm-' + m); localStorage.setItem('lm', m); }
-          else { var s = localStorage.getItem('lm'); if (s && all.indexOf('lm-' + s) >= 0) d.classList.add('lm-' + s); }
+          if (m === '0') { localStorage.removeItem('lm'); m = null; }
+          var v = null;
+          if (m && m >= '1' && m <= '4') { v = m; localStorage.setItem('lm', m); }
+          else { v = localStorage.getItem('lm'); }
+          if (!v || all.indexOf('lm-' + v) < 0) v = '2'; // дефолт: №2 «ПОТОК» (выбор заказчика)
+          d.classList.add('lm-' + v);
         } catch (e) {}
       })();
     </script>

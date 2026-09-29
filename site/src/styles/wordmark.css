@@ -148,7 +148,8 @@ html.js[class*='lm-'] .logo.logo-in { opacity: 1; }
     from { background-position: 0% 0; }
     to { background-position: 100% 0; }
   }
-  .lm-2 .logo-name { animation: lm2-flow 3s linear infinite; }
+  /* туда-сюда: alternate + ease-in-out — мягкие развороты на концах */
+  .lm-2 .logo-name { animation: lm2-flow 3.5s ease-in-out infinite alternate; }
 }
 @media (prefers-reduced-motion: reduce) {
   .lm-2 .logo-name { background-position: 50% 0; } /* статичный центр */
