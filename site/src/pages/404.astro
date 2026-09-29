@@ -4,10 +4,11 @@
 // класс-триггер .is-in); морфинг фигуры — SMIL (0 JS, 0 веса); noindex через
 // head-слот Base. Ссылка «На главную» — обычный переход (ClientRouter совместим).
 import Base from '../layouts/Base.astro';
+import { SITE } from '../config';
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
-<Base title="404 — Страница не найдена">
+<Base title={`404 — ${SITE.name}`}>
   <Fragment slot="head">
     <meta name="robots" content="noindex" />
   </Fragment>
