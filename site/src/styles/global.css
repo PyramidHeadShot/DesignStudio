@@ -312,7 +312,9 @@ html.js .work-filters { visibility: visible; }
 .case-body img {
   display: block;
   width: 100%;
-  height: auto; /* aspect-ratio берётся из width/height атрибутов astro:assets — места резервируются до загрузки */
+  height: auto; /* волна Y: галерея — контейнеры 3:2, cover без полей */
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
 }
 
 /* --- Микроанимации (правило 4): только transform/opacity ---
@@ -474,25 +476,6 @@ a:focus-visible, .work-filter:focus-visible { outline: 2px solid var(--accent); 
   .m-still { display: block; }
 }
 
-/* --- Волна P: счётчик работ у фильтра --- */
-.work-count {
-  align-self: baseline;
-  margin: 0;
-  font-size: 14px;
-  color: var(--color-ink-muted);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums; /* цифры одной ширины — 6→2 не дёргает */
-  min-width: 8ch; /* фикс-минимум: «1 работа»/«2 работы» не сдвигают кнопки */
-}
-.work-count .vh {
-  /* SR-объявление: визуально скрыто, озвучивает смену один раз */
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 
 /* --- Волна R: мобильный проход 375px + tap-зоны --- */
 .cword { display: inline-block; white-space: nowrap; } /* буквы-дождик: перенос только по словам */

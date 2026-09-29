@@ -17,15 +17,6 @@ const heroSpans = SITE.heroTitle
   .join(' ');
 // Волна P: счётчик работ у фильтра (демо №17) — статичный текст в HTML и
 // клиентский пересчёт: правильное склонение по-русски (1 работа / 2 работы / 5 работ)
-const total = cases.length;
-const pluralWorks = (n: number) => {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  const word =
-    m10 === 1 && m100 !== 11 ? 'работа' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 'работы' : 'работ';
-  return `${n} ${word}`;
-};
-// BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio)
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 // Волна K: marquee-тикер подзаголовка героя (демо №20). Количество повторов
 // фразы в ОДНОЙ половине трека: половина ≥ ширины вьюпорта → бесшовный -50% loop
@@ -35,11 +26,12 @@ const TICKER_REPS = 10;
 // stroke 1.5, round, currentColor, без заливок; pathLength=100 — как у uline (draw).
 const ICONS: Record<string, string> = {
   all: '<rect x="2.5" y="2.5" width="5" height="5" pathLength="100"/><rect x="10.5" y="2.5" width="5" height="5" pathLength="100"/><rect x="2.5" y="10.5" width="5" height="5" pathLength="100"/><rect x="10.5" y="10.5" width="5" height="5" pathLength="100"/>',
-  'Брендинг': '<rect x="2.5" y="2.5" width="13" height="13" rx="3.5" pathLength="100"/><circle cx="9" cy="9" r="1.6" pathLength="100"/>',
-  'Цифровой дизайн': '<rect x="2.5" y="3.5" width="13" height="11" rx="1.5" pathLength="100"/><path d="M2.5 7h13" pathLength="100"/><circle cx="5" cy="5.25" r="0.8" pathLength="100"/><circle cx="7.5" cy="5.25" r="0.8" pathLength="100"/>',
-  'Навигация и среда': '<path d="M9 2.5v13" pathLength="100"/><path d="M5 4.5h8.5l2 2.25-2 2.25H5z" pathLength="100"/>',
-  'Продуктовый дизайн': '<path d="M9 2.5 15 5.75 9 9 3 5.75Z" pathLength="100"/><path d="M3 5.75v6L9 15l6-3.25v-6" pathLength="100"/>',
-  'Дизайн публикаций': '<rect x="2.5" y="3.5" width="13" height="11" rx="1" pathLength="100"/><path d="M9 3.5v11" pathLength="100"/><path d="M4.8 7h2.4M4.8 9.5h2.4M10.8 7h2.4" pathLength="100"/>',
+  'Реклама для ресторанов': '<path d="M5.5 2.5v3.5a1.75 1.75 0 0 0 3.5 0V2.5M7.25 2.5v13" pathLength="100"/><path d="M13.5 2.5v13M13.5 2.5c-2 2-2.4 4.4-1.4 6.4h1.4" pathLength="100"/>',
+  'Дизайн упаковки': '<path d="M9 2.5 15 5.75 9 9 3 5.75Z" pathLength="100"/><path d="M3 5.75v6L9 15l6-3.25v-6" pathLength="100"/>',
+  'Наружная реклама': '<rect x="2.5" y="3" width="13" height="7" rx="1" pathLength="100"/><path d="M6 10v5.5M12 10v5.5M6.5 6.5h5" pathLength="100"/>',
+  'Полиграфия': '<path d="M9 4.5C7.5 3 5 2.5 2.5 2.5v11c2.5 0 5 .5 6.5 2 1.5-1.5 4-2 6.5-2v-11c-2.5 0-5 .5-6.5 2z" pathLength="100"/><path d="M9 4.5v11" pathLength="100"/>',
+  'Инфографика и маркетплейсы': '<path d="M3.5 15.5V10M6.5 15.5V7.5" pathLength="100"/><rect x="8.5" y="2.5" width="7" height="5.5" rx="1" pathLength="100"/><path d="M10 15.5v-4" pathLength="100"/>',
+  'Рекламные макеты': '<rect x="2.5" y="2.5" width="13" height="13" rx="1" pathLength="100"/><rect x="5.5" y="6" width="7" height="6" pathLength="100"/>',
 };
 ---
 
@@ -74,12 +66,6 @@ const ICONS: Record<string, string> = {
   <section aria-label="Портфолио">
     {/* Фильтр — island; без JS скрыт (см. CSS), сетка показана полностью */}
     <div class="work-filters" role="group" aria-label="Фильтр работ по дисциплинам">
-      <!-- Волна P: счётчик видимых работ (.n — визуал, aria-hidden; .vh — скрытая
-           aria-live-объявление, обновляется один раз по завершении анимации) -->
-      <p class="work-count" data-v={total}>
-        <span class="n" aria-hidden="true">{pluralWorks(total)}</span>
-        <span class="vh" aria-live="polite">{pluralWorks(total)}</span>
-      </p>
       <button type="button" class="work-filter" data-category="all" aria-pressed="true">
         <svg class="ficon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><Fragment set:html={ICONS.all} /></svg>Все
       </button>
@@ -146,46 +132,6 @@ const ICONS: Record<string, string> = {
     let io: IntersectionObserver | null = null;
     let filtering = false; // защита от спама кликами во время перехода
 
-    // --- Волна P: счётчик работ (демо №17). Техника — anime.js (уже в чанке
-    // главной, общий rAF-цикл с FLIP/hero — нулевой добавочный вес) ---
-    const countEl = document.querySelector<HTMLElement>('.work-count');
-    const plural = (n: number) => {
-      const m10 = n % 10;
-      const m100 = n % 100;
-      return m10 === 1 && m100 !== 11
-        ? `${n} работа`
-        : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)
-          ? `${n} работы`
-          : `${n} работ`;
-    };
-    const setVisual = (n: number) => {
-      if (!countEl) return;
-      countEl.dataset.v = String(n);
-      const vis = countEl.querySelector('.n');
-      if (vis) vis.textContent = plural(n);
-    };
-    const announce = (n: number) => {
-      const vh = countEl?.querySelector('.vh');
-      if (vh) vh.textContent = plural(n); // SR-объявление — один раз, без спама
-    };
-    const countTo = (target: number, duration: number, from?: number) => {
-      if (!countEl) return;
-      if (reduceMotion().matches) {
-        setVisual(target);
-        announce(target);
-        return;
-      }
-      const start = from ?? Number(countEl.dataset.v ?? total);
-      const o = { v: start };
-      animate(o, {
-        v: target,
-        duration,
-        ease: 'out(3)',
-        onUpdate: () => setVisual(Math.round(o.v)),
-        onComplete: () => announce(target),
-      });
-    };
-
     createScope({
       mediaQueries: { reduce: '(prefers-reduced-motion: reduce)' },
     }).add((self) => {
@@ -230,7 +176,6 @@ const ICONS: Record<string, string> = {
               onBegin: () => {
                 filtersRow?.classList.add('icons-drawn');
                 document.querySelector('.hero-rule')?.classList.add('is-drawn');
-                countTo(total, 700, 0);
               },
             },
             '-=260',
@@ -303,7 +248,6 @@ const ICONS: Record<string, string> = {
             if (el.hidden && show) entering.push(el);
             if (show) staying.push(el);
           }
-          countTo(staying.length, 250); // Волна P: пересчёт счётчика к числу видимых
 
           if (frozen()) {
             // мгновенно: только скрытие/показ (текущее поведение)

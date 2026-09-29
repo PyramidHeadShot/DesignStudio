@@ -30,9 +30,8 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
   <article class="container case">
     <header class="case-head">
       <h1>{entry.data.title}</h1>
-      <p style="color:var(--muted)">
-        {entry.data.client ?? '?'} · {entry.data.category}{entry.data.year ? ` · ${entry.data.year}` : ''}
-      </p>
+      <!-- Волна Y: мета — только категория (клиент/год в данных отсутствуют) -->
+      <p style="color:var(--muted)">{entry.data.category}</p>
     </header>
     {entry.data.cover && (
       <!-- Волна Q: обёртка параллакса — overflow hidden; fade-up перенесён с img на
