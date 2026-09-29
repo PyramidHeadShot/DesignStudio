@@ -1,26 +1,7 @@
-/* Волна W (уточнение X): вордмарк «АТОМ СЭИЛС» — 4 варианта с БЕСКОНЕЧНЫМИ
-   loop-моторами (чистый CSS, работают и без JS). Переключатель ?lm=1..4
-   (инлайн-скрипт Base) / localStorage. Все анимации — transform/opacity/color
-   + background-position у №2 (paint-only). Hover — пауза (play-state: paused);
-   prefers-reduced-motion — полная статика. Появление — мягкий fade 300 мс. */
+/* Вордмарк «АТОМ СЭИЛС» — финальный вариант «ПОТОК» (выбор заказчика 2026-09-29):
+   Unbounded 600, непрерывный перелив цвета туда-сюда (alternate, мягкие развороты),
+   hover — пауза, prefers-reduced-motion — статика. Варианты 1/3/4 и лишние шрифты удалены. */
 
-/* --- Шрифты (self-hosted, subsets cyrillic + latin, font-display: swap) --- */
-@font-face {
-  font-family: 'Russo One';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../assets/fonts/russo-one-cyr.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'Russo One';
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  src: url('../assets/fonts/russo-one-lat.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+2215;
-}
 @font-face {
   font-family: 'Unbounded';
   font-style: normal;
@@ -37,93 +18,8 @@
   src: url('../assets/fonts/unbounded-lat.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+2215;
 }
-@font-face {
-  font-family: 'Oswald';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../assets/fonts/oswald-cyr.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'Oswald';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../assets/fonts/oswald-lat.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+2215;
-}
-@font-face {
-  font-family: 'Playfair Display';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('../assets/fonts/playfair-display-cyr.woff2') format('woff2');
-  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
-}
-@font-face {
-  font-family: 'Playfair Display';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('../assets/fonts/playfair-display-lat.woff2') format('woff2');
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2212, U+2215;
-}
 
-/* --- База вордмарка --- */
 .logo-name {
-  display: inline-block;
-  white-space: nowrap;
-  font-family: 'Inter Tight', 'Inter Tight Fallback', system-ui, sans-serif;
-  font-weight: 700;
-  font-size: clamp(20px, 4.5vw, 26px);
-  letter-spacing: -0.02em;
-  line-height: 1;
-}
-.lw { display: inline-block; }
-.ln { display: inline-block; }
-/* появление: мягкий fade 300 мс (триггер .logo-in); дефолт lm-0 — прежнее появление */
-html.js[class*='lm-'] .logo {
-  opacity: 0;
-  transform: none;
-  transition: opacity 0.3s ease;
-}
-html.js[class*='lm-'] .logo.logo-in { opacity: 1; }
-/* hover — пауза всех бесконечных моторов */
-.lm-1 .logo:hover .ln,
-.lm-3 .logo:hover .ln,
-.lm-4 .logo:hover .ln { animation-play-state: paused; }
-.lm-2 .logo:hover .logo-name { animation-play-state: paused; }
-
-/* --- №1 «ВОЛНА» — Russo One: буквы плывут синусоидой (±4px, 2.4s alternate,
-   фазовый сдвиг 90 мс — отрицательный delay, «хвостик» без пауз старта) --- */
-.lm-1 .logo-name {
-  font-family: 'Russo One', 'Inter Tight', sans-serif;
-  font-weight: 400;
-  font-size: clamp(19px, 4.2vw, 33px);
-  letter-spacing: 0.03em;
-}
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes lm1-wave {
-    from { transform: translateY(-4px); }
-    to { transform: translateY(4px); }
-  }
-  .lm-1 .logo .ln { animation: lm1-wave 2.4s ease-in-out -0.54s infinite alternate; }
-  .lm-1 .logo .lw:nth-child(1) .ln { animation-delay: -0ms; }
-  .lm-1 .logo .lw:nth-child(2) .ln { animation-delay: -90ms; }
-  .lm-1 .logo .lw:nth-child(3) .ln { animation-delay: -180ms; }
-  .lm-1 .logo .lw:nth-child(4) .ln { animation-delay: -270ms; }
-  .lm-1 .logo .lw:nth-child(5) .ln { animation-delay: -360ms; }
-  .lm-1 .logo .lw:nth-child(6) .ln { animation-delay: -450ms; }
-  .lm-1 .logo .lw:nth-child(7) .ln { animation-delay: -540ms; }
-  .lm-1 .logo .lw:nth-child(8) .ln { animation-delay: -630ms; }
-  .lm-1 .logo .lw:nth-child(9) .ln { animation-delay: -720ms; }
-}
-
-/* --- №2 «ПОТОК» — Unbounded 600: непрерывный перелив цвета по тексту.
-   Бесшовность: градиент с периодом 1/3 картинки (ink→accent→light→ink×2),
-   size 300%, position 0→100% = сдвиг ровно 2 периода --- */
-.lm-2 .logo-name {
   font-family: 'Unbounded', 'Inter Tight', sans-serif;
   font-weight: 600;
   font-size: clamp(17px, 3.9vw, 30px);
@@ -143,75 +39,16 @@ html.js[class*='lm-'] .logo.logo-in { opacity: 1; }
   background-clip: text;
   color: transparent;
 }
+
+/* Вечный перелив «туда-сюда»; hover на логотипе — стоп-кадр */
 @media (prefers-reduced-motion: no-preference) {
   @keyframes lm2-flow {
     from { background-position: 0% 0; }
     to { background-position: 100% 0; }
   }
-  /* туда-сюда: alternate + ease-in-out — мягкие развороты на концах */
-  .lm-2 .logo-name { animation: lm2-flow 3.5s ease-in-out infinite alternate; }
+  .logo-name { animation: lm2-flow 3.5s ease-in-out infinite alternate; }
+  .logo:hover .logo-name { animation-play-state: paused; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lm-2 .logo-name { background-position: 50% 0; } /* статичный центр */
-}
-
-/* --- №3 «БЕГУЩИЙ АКЦЕНТ» — Oswald 700 caps: импульс по буквам
-   (подъём+акцент ~0.4 с, очередь с шагом 140 мс, общий цикл 3.2 с) --- */
-.lm-3 .logo-name {
-  font-family: 'Oswald', 'Inter Tight', sans-serif;
-  font-weight: 700;
-  font-size: clamp(19px, 4.4vw, 34px);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes lm3-pulse {
-    0%, 14%, 100% { transform: none; color: var(--color-ink); }
-    7% { transform: translateY(-3px) scale(1.06); color: var(--color-accent); }
-  }
-  .lm-3 .logo .ln { animation: lm3-pulse 3.2s linear infinite; }
-  .lm-3 .logo .lw:nth-child(1) .ln { animation-delay: -0ms; }
-  .lm-3 .logo .lw:nth-child(2) .ln { animation-delay: -140ms; }
-  .lm-3 .logo .lw:nth-child(3) .ln { animation-delay: -280ms; }
-  .lm-3 .logo .lw:nth-child(4) .ln { animation-delay: -420ms; }
-  .lm-3 .logo .lw:nth-child(5) .ln { animation-delay: -560ms; }
-  .lm-3 .logo .lw:nth-child(6) .ln { animation-delay: -700ms; }
-  .lm-3 .logo .lw:nth-child(7) .ln { animation-delay: -840ms; }
-  .lm-3 .logo .lw:nth-child(8) .ln { animation-delay: -980ms; }
-  .lm-3 .logo .lw:nth-child(9) .ln { animation-delay: -1120ms; }
-}
-
-/* --- №4 «МАЯТНИК» — Playfair Display 600: покачивание букв
-   (rotate ±4°, origin снизу, 2.8s alternate, фазовый сдвиг 120 мс) --- */
-.lm-4 .logo-name {
-  font-family: 'Playfair Display', Georgia, 'Inter Tight', serif;
-  font-weight: 600;
-  font-size: clamp(20px, 4.6vw, 36px);
-  letter-spacing: 0.05em;
-}
-.lm-4 .logo .ln { transform-origin: bottom center; }
-@media (prefers-reduced-motion: no-preference) {
-  @keyframes lm4-swing {
-    from { transform: rotate(-4deg); }
-    to { transform: rotate(4deg); }
-  }
-  .lm-4 .logo .ln { animation: lm4-swing 2.8s ease-in-out -0.72s infinite alternate; }
-  .lm-4 .logo .lw:nth-child(1) .ln { animation-delay: -0ms; }
-  .lm-4 .logo .lw:nth-child(2) .ln { animation-delay: -120ms; }
-  .lm-4 .logo .lw:nth-child(3) .ln { animation-delay: -240ms; }
-  .lm-4 .logo .lw:nth-child(4) .ln { animation-delay: -360ms; }
-  .lm-4 .logo .lw:nth-child(5) .ln { animation-delay: -480ms; }
-  .lm-4 .logo .lw:nth-child(6) .ln { animation-delay: -600ms; }
-  .lm-4 .logo .lw:nth-child(7) .ln { animation-delay: -720ms; }
-  .lm-4 .logo .lw:nth-child(8) .ln { animation-delay: -840ms; }
-  .lm-4 .logo .lw:nth-child(9) .ln { animation-delay: -960ms; }
-}
-
-/* prefers-reduced-motion: все моторы стоят (правила выше уже в no-preference-
-   гейтах; здесь явный стоп как страховка) */
-@media (prefers-reduced-motion: reduce) {
-  .lm-1 .logo .ln,
-  .lm-3 .logo .ln,
-  .lm-4 .logo .ln,
-  .lm-2 .logo-name { animation: none; }
+  .logo-name { background-position: 50% 0; }
 }

@@ -17,31 +17,11 @@ const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
 // Волна W: вордмарк «АТОМ СЭИЛС» — 4 шрифтовых варианта (wordmark.css),
 // переключатель ?lm=1..4 / localStorage (инлайн в head, до рендера)
 const WORDMARK = 'АТОМ СЭИЛС';
-const wordmarkSpans = [...WORDMARK]
-  .map((ch) => (/\s/.test(ch) ? ' ' : `<span class="lw" aria-hidden="true"><span class="ln">${ch}</span></span>`))
-  .join('');
 ---
 
 <!doctype html>
 <html lang="ru">
   <head>
-    <!-- Волна W: выбор вордмарка до первого рендера (?lm=1..4; ?lm=0 — сброс дефолта) -->
-    <script is:inline>
-      (function () {
-        try {
-          var d = document.documentElement;
-          var all = ['lm-1', 'lm-2', 'lm-3', 'lm-4'];
-          all.forEach(function (c) { d.classList.remove(c); });
-          var m = new URLSearchParams(location.search).get('lm');
-          if (m === '0') { localStorage.removeItem('lm'); m = null; }
-          var v = null;
-          if (m && m >= '1' && m <= '4') { v = m; localStorage.setItem('lm', m); }
-          else { v = localStorage.getItem('lm'); }
-          if (!v || all.indexOf('lm-' + v) < 0) v = '2'; // дефолт: №2 «ПОТОК» (выбор заказчика)
-          d.classList.add('lm-' + v);
-        } catch (e) {}
-      })();
-    </script>
     <!-- Волна N: клиентские переходы (SPA) — тонкий fade на <main>, встроенный
          astro-fade сам отключается при prefers-reduced-motion -->
     <ClientRouter />
@@ -60,7 +40,7 @@ const wordmarkSpans = [...WORDMARK]
       <!-- Волна W: текстовый вордмарк «АТОМ СЭИЛС» — 4 варианта (wordmark.css);
            картинка логотипа осталась в футере; кинетика — по .logo-in -->
       <a class="logo" href={`${base}/`} aria-label={`${WORDMARK} — на главную`}>
-        <span class="logo-name" aria-hidden="true"><Fragment set:html={wordmarkSpans} /></span>
+        <span class="logo-name" aria-hidden="true">{WORDMARK}</span>
         <svg class="logo-ul" viewBox="0 0 120 3" preserveAspectRatio="none" aria-hidden="true">
           <line x1="1" y1="1.5" x2="119" y2="1.5" pathLength="100" />
         </svg>
@@ -97,17 +77,6 @@ const wordmarkSpans = [...WORDMARK]
       // (событие файрит и на первой загрузке, и после каждого клиент-перехода).
       document.documentElement.classList.add('js');
 
-      // Волна W: восстановление выбранного варианта вордмарка после client-перехода
-      // (классы <html> могут перезаписаться при свапе)
-      const applyLm = () => {
-        try {
-          const s = localStorage.getItem('lm');
-          if (s && /^[1-4]$/.test(s)) {
-            ['lm-1', 'lm-2', 'lm-3', 'lm-4'].forEach((c) => document.documentElement.classList.remove(c));
-            document.documentElement.classList.add('lm-' + s);
-          }
-        } catch {}
-      };
 
       window.addEventListener(
         'scroll',
@@ -138,7 +107,6 @@ const wordmarkSpans = [...WORDMARK]
       let footerIO: IntersectionObserver | null = null;
 
       function initBase() {
-        applyLm();
         // Волна M: триггер flip-волны логотипа шапки — первая нота до hero
         // (двойной rAF: transition стартует после первой отрисовки)
         const logo = document.querySelector('.logo');
