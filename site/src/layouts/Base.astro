@@ -37,13 +37,11 @@ const WORDMARK = 'АТОМ СЭИЛС';
 </head>
   <body>
     <header class="site-header">
-      <!-- Волна W: текстовый вордмарк «АТОМ СЭИЛС» — 4 варианта (wordmark.css);
-           картинка логотипа осталась в футере; кинетика — по .logo-in -->
+      <!-- Логотип-картинка + вордмарк «АТОМ СЭИЛС» (wordmark.css: перелив «ПОТОК»);
+           появление — по .logo-in, hover — пауза перелива и приглушение -->
       <a class="logo" href={`${base}/`} aria-label={`${WORDMARK} — на главную`}>
+        <Image class="logo-img" src={logo} width={320} height={320} alt="" aria-hidden="true" loading="eager" decoding="async" />
         <span class="logo-name" aria-hidden="true">{WORDMARK}</span>
-        <svg class="logo-ul" viewBox="0 0 120 3" preserveAspectRatio="none" aria-hidden="true">
-          <line x1="1" y1="1.5" x2="119" y2="1.5" pathLength="100" />
-        </svg>
       </a>
       <nav class="site-nav" aria-label="Основная навигация">
         <a href={`${base}/`}>Работы</a>
