@@ -1,6 +1,5 @@
 ---
 import { getCollection } from 'astro:content';
-import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import { SITE } from '../config';
 
@@ -78,11 +77,9 @@ const ICONS: Record<string, string> = {
           <figure style="margin:0">
             <div class="thumb">
               {c.data.cover ? (
-                <Image
+                <img
                   src={c.data.cover}
                   alt={`${c.data.title} — обложка кейса`}
-                  widths={[400, 640, 960]}
-                  sizes="(max-width: 360px) 100vw, 340px"
                   loading={i < 3 ? 'eager' : 'lazy'}
                   fetchpriority={i < 3 ? 'high' : 'auto'}
                   decoding="async"
@@ -92,7 +89,7 @@ const ICONS: Record<string, string> = {
               )}
             </div>
             <figcaption>
-              {c.data.title} <span>— {c.data.category}{c.data.year ? `, ${c.data.year}` : ''}</span>
+              {c.data.title} <span>— {c.data.category}</span>
             </figcaption>
           </figure>
           </div>

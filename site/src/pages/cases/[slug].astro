@@ -1,7 +1,7 @@
 ---
-import { getCollection, render } from 'astro:content';
-import { Image } from 'astro:assets';
+import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
+import { SITE } from '../../config';
 import { SITE } from '../../config';
 
 export async function getStaticPaths() {
@@ -12,8 +12,11 @@ export async function getStaticPaths() {
 }
 
 const { entry } = Astro.props;
-const { Content } = await render(entry);
-// Сосед по order из отсортированной коллекции: следующий, циклично (6 кейсов → 1-й)
+// Волна Z: body — авторский текст из YAML (абзацы по пустой строке, одинарные
+// переносы — <br>); рендерим безопасно (escape) без markdown-движка
+const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const paragraphs = entry.data.body.split(/\n{2,}/).map((p) => esc(p.trim()).replace(/\n/g, '<br />'));
+// Сосед по order из отсортированной коллекции: следующий, циклично (12 кейсов → 1-й)
 const cases = (await getCollection('cases')).sort(
   (a, b) => a.data.order - b.data.order,
 );
@@ -37,19 +40,21 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       <!-- Волна Q: обёртка параллакса — overflow hidden; fade-up перенесён с img на
            обёртку (иначе fill-mode обеих блокировал бы inline transform параллакса) -->
       <div class="case-hero-wrap">
-        <Image
+        <img
           class="case-hero"
           src={entry.data.cover}
           alt={`${entry.data.title} — обложка кейса`}
-          widths={[800, 1200, 1600]}
-          sizes="(min-width: 900px) 860px, 100vw"
           loading="eager"
           decoding="async"
         />
       </div>
     )}
     <div class="case-body">
-      <Content />
+      {paragraphs.map((p) => <p set:html={p} />)}
+      <!-- Волна Z: галерея из поля gallery (Keystatic) -->
+      {entry.data.gallery.map((src, i) => (
+        <img src={src} alt={`${entry.data.title} — фото ${i + 2}`} loading="lazy" decoding="async" />
+      ))}
     </div>
 
     <!-- Навигация между кейсами: назад на сетку / следующий кейс (циклично) -->
