@@ -19,8 +19,10 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       (function () {
         var base = '/DesignStudio';
         var p = location.pathname;
+        // keystatic-пути без реальной страницы (обновление F5 на глубоком маршруте)
+        // → на корень админки (сам OAuth-колбэк — реальная страница, см. astro.config)
         if (p === base + '/keystatic' || p.startsWith(base + '/keystatic/')) {
-          location.replace(base + '/keystatic' + p.slice((base + '/keystatic').length) + location.search);
+          location.replace(base + '/keystatic/' + location.search);
         }
       })();
     </script>

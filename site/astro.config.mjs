@@ -1,5 +1,5 @@
 import { defineConfig } from 'astro/config';
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 
@@ -16,6 +16,15 @@ function keystaticDev() {
   return {
     name: 'keystatic-dev-routes',
     hooks: {
+      // Волна AP: GitHub Pages не умеет SPA-роуты — OAuth-колбэк Keystatic Cloud
+      // ({base}/keystatic/cloud/oauth/callback) отдаём как реальную страницу
+      // (копия админки; её роутер сам обработает маршрут).
+      'astro:build:done': ({ dir }) => {
+        const admin = new URL('keystatic/index.html', dir);
+        const dest = new URL('keystatic/cloud/oauth/callback/', dir);
+        mkdirSync(dest, { recursive: true });
+        copyFileSync(admin, new URL('index.html', dest));
+      },
       'astro:config:setup': ({ injectRoute, updateConfig, command, config }) => {
         const base = config.base.replace(/\/+$/, '');
 
