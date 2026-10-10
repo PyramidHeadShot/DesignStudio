@@ -9,6 +9,10 @@ const DEFAULTS = {
     'Графический дизайн, дизайн упаковки, полиграфия, наружная реклама, оформление социальных сетей, инфографика и карточки товаров для маркетплейсов',
   phone: '+7 (927) 891-08-34',
   email: 'hello@example.com',
+  address: '',
+  workHours: '',
+  telegram: '',
+  vk: '',
 };
 
 export const SITE = { ...DEFAULTS, ...siteSettings } as const;

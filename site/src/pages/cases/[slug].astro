@@ -2,7 +2,6 @@
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import { SITE } from '../../config';
-import { SITE } from '../../config';
 
 export async function getStaticPaths() {
   const cases = (await getCollection('cases')).sort(
@@ -16,6 +15,14 @@ const { entry } = Astro.props;
 // переносы — <br>); рендерим безопасно (escape) без markdown-движка
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 const paragraphs = entry.data.body.split(/\n{2,}/).map((p) => esc(p.trim()).replace(/\n/g, '<br />'));
+// Волна AA (аудит 2026-09-30): уникальный description из первого абзаца body
+// (~160 знаков по границе слова) — вместо шаблонного на всех страницах
+const caseDescription = (() => {
+  const text = entry.data.body.replace(/\s+/g, ' ').trim();
+  // заглушка body («Описание готовится.») не годится для meta — фолбэк на общий текст
+  if (text.length < 40 || /^Описание готовится/.test(text)) return SITE.heroText;
+  return text.length <= 160 ? text : text.slice(0, 157).replace(/\s\S*$/, '') + '…';
+})();
 // Сосед по order из отсортированной коллекции: следующий, циклично (12 кейсов → 1-й)
 const cases = (await getCollection('cases')).sort(
   (a, b) => a.data.order - b.data.order,
@@ -26,7 +33,7 @@ const next = cases[(idx + 1) % cases.length];
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 ---
 
-<Base title={`${entry.data.title} — ${SITE.name}`}>
+<Base title={`${entry.data.title} — ${SITE.name}`} description={caseDescription} image={entry.data.cover}>
   <!-- Акцентная линия прогресса чтения сверху (scroll-linked scaleX, transform-only) -->
   <div class="read-progress" aria-hidden="true"></div>
 
@@ -36,6 +43,13 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
       <!-- Волна Y: мета — только категория (клиент/год в данных отсутствуют) -->
       <p style="color:var(--muted)">{entry.data.category}</p>
     </header>
+
+    <!-- Волна AE (фидбек 2026-09-30): дублируем навигацию сверху — не надо
+         листать до низа, чтобы уйти на сетку или к следующему кейсу -->
+    <nav class="case-nav case-nav--top" aria-label="Навигация по кейсам — верх страницы">
+      <a href={`${base}/`}>← Все наши работы</a>
+      <a href={`${base}/cases/${next.id}/`}>Следующий кейс: {next.data.title} →</a>
+    </nav>
     {entry.data.cover && (
       <!-- Волна Q: обёртка параллакса — overflow hidden; fade-up перенесён с img на
            обёртку (иначе fill-mode обеих блокировал бы inline transform параллакса) -->
@@ -58,8 +72,8 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
     </div>
 
     <!-- Навигация между кейсами: назад на сетку / следующий кейс (циклично) -->
-    <nav class="case-nav" aria-label="Навигация по кейсам">
-      <a href={`${base}/`}>← все работы</a>
+    <nav class="case-nav" aria-label="Навигация по кейсам — низ страницы">
+      <a href={`${base}/`}>← Все наши работы</a>
       <a href={`${base}/cases/${next.id}/`}>Следующий кейс: {next.data.title} →</a>
     </nav>
   </article>

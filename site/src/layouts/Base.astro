@@ -7,13 +7,23 @@ import cyrFont from '../assets/fonts/inter-tight-cyrillic.woff2?url';
 import logo from '../assets/logo.jpg';
 import { SITE } from '../config';
 
-interface Props { title?: string; }
-const { title = SITE.name } = Astro.props;
+interface Props { title?: string; description?: string; image?: string; }
+const { title = SITE.name, description = SITE.heroText, image } = Astro.props;
 const year = new Date().getFullYear();
 // BASE_URL с учётом base из astro.config.mjs (GitHub Pages /DesignStudio); нормализуем слэш
 const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+// Волна AA (аудит 2026-09-30): canonical + Open Graph + Twitter Card.
+// canonical — абсолютный URL текущего пути (Astro.url.pathname уже с base);
+// og:image — абсолютный URL (соцсети не принимают относительные пути).
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : Astro.url.pathname;
+const ogImage = image ? new URL(image.startsWith('/') ? image : base + '/' + image, Astro.site).href : undefined;
 // tel: без пробелов
 const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
+// Волна AG: нормализация мессенджеров — @ник → t.me/, http(s) — как есть
+const tgHref = SITE.telegram
+  ? SITE.telegram.startsWith('http') ? SITE.telegram : `https://t.me/${SITE.telegram.replace(/^@/, '')}`
+  : '';
+const vkHref = SITE.vk;
 // Волна W: вордмарк «АТОМ СЭИЛС» — 4 шрифтовых варианта (wordmark.css),
 // переключатель ?lm=1..4 / localStorage (инлайн в head, до рендера)
 const WORDMARK = 'АТОМ СЭИЛС';
@@ -28,7 +38,19 @@ const WORDMARK = 'АТОМ СЭИЛС';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
-    <meta name="description" content={SITE.heroText} />
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={SITE.name} />
+    <meta property="og:locale" content="ru_RU" />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? 'summary_large_image' : 'summary'} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
     <!-- preload основного subset'а (кириллица — язык сайта) -->
     <link rel="preload" as="font" type="font/woff2" href={cyrFont} crossorigin />
       <link rel="icon" type="image/svg+xml" href={`${base}/favicon.svg`} />
@@ -45,7 +67,7 @@ const WORDMARK = 'АТОМ СЭИЛС';
       </a>
       <nav class="site-nav" aria-label="Основная навигация">
         <a href={`${base}/`}>Работы</a>
-        <a href={`${base}/#contact`}>Контакты</a>
+        <a href={`${base}/contacts/`}>Контакты</a>
       </nav>
     </header>
     <main transition:animate={fade({ duration: '0.3s', easing: 'cubic-bezier(0.22, 1, 0.36, 1)' })}>
@@ -57,9 +79,20 @@ const WORDMARK = 'АТОМ СЭИЛС';
         <line x1="0" y1="0.5" x2="100%" y2="0.5" pathLength="100" />
       </svg>
       <span>© {year} {SITE.name} <Image class="logo-foot" src={logo} width={320} height={320} alt="АТОМ СЭИЛС — студия дизайна" loading="lazy" decoding="async" /></span>
-      <span class="site-contacts">
-        <a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={`tel:${phoneHref}`}>{SITE.phone}</a>
-      </span> <!-- ЗАГЛУШКА -->
+      <div class="site-contacts">
+        <span class="site-contacts-line">
+          <a href={`mailto:${SITE.email}`}>{SITE.email}</a> · <a href={`tel:${phoneHref}`}>{SITE.phone}</a>
+        </span>
+        {SITE.address && <span class="site-contacts-line">{SITE.address}</span>}
+        {SITE.workHours && <span class="site-contacts-line">{SITE.workHours}</span>}
+        {(tgHref || vkHref) && (
+          <span class="site-contacts-line">
+            {tgHref && <a href={tgHref} target="_blank" rel="noopener noreferrer">Telegram</a>}
+            {tgHref && vkHref && ' · '}
+            {vkHref && <a href={vkHref} target="_blank" rel="noopener noreferrer">VK</a>}
+          </span>
+        )}
+      </div>
     </footer>
     <script>
       // Шапка: sticky-состояние после 30px скролла (фон/бордер через CSS-transition).

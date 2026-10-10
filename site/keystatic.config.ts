@@ -13,13 +13,15 @@ export default config({
   storage: { kind: 'local' },
   ui: {
     brand: { name: 'АТОМ СЭИЛС — админка' },
-    navigation: { Кейсы: ['cases'], Настройки: ['settings'] },
+    // группа «Контент» + коллекция «Кейсы» — иначе сайдбар дублирует «Кейсы / Кейсы»
+    navigation: { Контент: ['cases'], Настройки: ['settings'] },
   },
   collections: {
     cases: collection({
       label: 'Кейсы',
       slugField: 'slug',
-      path: 'src/content/cases',
+      // маска /* обязательна: файл <slug>.yaml в src/content/cases/
+      path: 'src/content/cases/*',
       format: { data: 'yaml' },
       schema: {
         title: fields.text({ label: 'Название' }),
@@ -50,6 +52,12 @@ export default config({
         heroText: fields.text({ label: 'Бегущая строка — услуги, разделитель ◆' }),
         phone: fields.text({ label: 'Телефон', defaultValue: '+7 (927) 891-08-34' }),
         email: fields.text({ label: 'Email', defaultValue: 'hello@example.com' }),
+        // Волна AG (фидбек 2026-09-30): контактный блок — все поля необязательные,
+        // пустые не рендерятся в футере
+        address: fields.text({ label: 'Адрес (необязательно)' }),
+        workHours: fields.text({ label: 'Часы работы (необязательно)' }),
+        telegram: fields.text({ label: 'Telegram — @ник или ссылка (необязательно)' }),
+        vk: fields.text({ label: 'VK — ссылка (необязательно)' }),
       },
     }),
   },

@@ -1,0 +1,54 @@
+---
+// Волна AH (2026-09-30): отдельная страница контактов.
+// Данные — из синглтона «Настройки сайта» (Keystatic), фон — «Исходники/Главный фон.jpg»
+// через astro:assets (src/assets, конвертируется в webp на сборке).
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import { SITE } from '../config';
+import bg from '../assets/contact-bg.jpg';
+
+const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
+const vkHost = SITE.vk.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+---
+
+<Base title={`Контакты — ${SITE.name}`} description={`Связаться со студией ${SITE.name}: ${SITE.phone}, ${SITE.address}. Telegram и VK.`}>
+  <article class="container case contacts">
+    <!-- Фон-баннер: декоративный (alt=""), во всю ширину до нативных 1822px,
+         дальше — центрируется без апскейла -->
+    <Image class="contacts-hero" src={bg} width={1822} height={728} alt="" loading="eager" decoding="async" />
+
+    <header class="case-head">
+      <h1>Контакты</h1>
+      <p style="color:var(--muted)">Напишите или позвоните — обсудим вашу задачу</p>
+    </header>
+
+    <dl class="contacts-list">
+      <div class="contacts-row">
+        <dt>Телефон</dt>
+        <dd><a href={`tel:${phoneHref}`}>{SITE.phone}</a></dd>
+      </div>
+      <div class="contacts-row">
+        <dt>Email</dt>
+        <dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd>
+      </div>
+      <div class="contacts-row">
+        <dt>Адрес</dt>
+        <dd>{SITE.address}</dd>
+      </div>
+      {SITE.workHours && (
+        <div class="contacts-row">
+          <dt>Часы работы</dt>
+          <dd>{SITE.workHours}</dd>
+        </div>
+      )}
+      <div class="contacts-row">
+        <dt>Telegram</dt>
+        <dd><a href={SITE.telegram} target="_blank" rel="noopener noreferrer">{SITE.telegram.replace(/^https?:\/\//, '')}</a></dd>
+      </div>
+      <div class="contacts-row">
+        <dt>VK</dt>
+        <dd><a href={SITE.vk} target="_blank" rel="noopener noreferrer">{vkHost}</a></dd>
+      </div>
+    </dl>
+  </article>
+</Base>

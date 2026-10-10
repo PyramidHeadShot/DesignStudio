@@ -19,7 +19,8 @@ const LOGO = 'DesignStudio';
     <title>dev · Песочница анимаций — DesignStudio</title>
   </head>
   <body>
-    <div class="lab">
+    <!-- a11y (аудит 2026-09-30): main-landmark для скринридеров -->
+    <main class="lab">
       <header class="lab-top">
         <span class="badge">dev</span>
         <h1>Песочница анимаций</h1>
@@ -327,7 +328,7 @@ const LOGO = 'DesignStudio';
         Внутренняя страница согласования (dev/animations) — в навигации сайта не используется,
         из индексации исключена. После выбора номеров эффекты переносятся на основные страницы.
       </footer>
-    </div>
+    </main>
 
     <script>
       // Единый скрипт страницы: реестр демо, IntersectionObserver для автоплея,

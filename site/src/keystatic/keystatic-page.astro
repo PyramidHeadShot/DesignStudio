@@ -1,0 +1,271 @@
+---
+// Волна AC (2026-09-30): обёртка над официальной страницей Keystatic.
+// Добавляет панель предпросмотра: iframe с живой страницей сайта справа,
+// следит за текущим элементом (slug из URL админки), автообновление после
+// сохранения (перехват POST /api/keystatic/update). Подключается в
+// astro.config.mjs вместо @keystatic/astro/internal/keystatic-astro-page.astro
+// (роут инжектится только в dev).
+import { Keystatic } from './keystatic-entry.js';
+---
+
+<Keystatic client:only="react" />
+
+<script>
+  // Панель живёт вне React-острова (Keystatic client:only) — обычный DOM.
+  // Стили инжектим из скрипта: Astro dev не прокидывает <style> .astro-страницы
+  // инжектнутого роута (проверено 2026-09-30).
+  const css = `
+  .ks-prev-toggle {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10000;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: #fff;
+    color: #111;
+    font: 600 13px/1 system-ui, sans-serif;
+    padding: 10px 14px;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+  }
+  body.ks-prev-open .ks-prev-toggle { left: calc(56vw + 16px); }
+  .ks-prev-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 56vw;
+    min-width: 380px;
+    height: 100vh;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border-left: 1px solid rgba(128, 128, 128, 0.35);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  }
+  body.ks-prev-open .ks-prev-panel { display: flex; }
+  .ks-prev-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+    font: 600 12px/1.2 system-ui, sans-serif;
+    color: #555;
+  }
+  .ks-prev-head .ks-prev-path {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ks-prev-head button {
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: none;
+    color: #111;
+    font: 600 12px/1 system-ui, sans-serif;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .ks-prev-head button:hover { background: rgba(0, 0, 0, 0.05); }
+  .ks-prev-frame { flex: 1; border: 0; width: 100%; }
+  body.ks-prev-open > div:not(.ks-prev-panel) { padding-right: 56vw; }
+  /* Кнопка удаления кейса + модальное подтверждение */
+  .ks-del-btn {
+    position: fixed;
+    left: 16px;
+    bottom: 64px;
+    z-index: 10000;
+    border: 1px solid rgba(200, 60, 60, 0.5);
+    background: #fff;
+    color: #b42318;
+    font: 600 13px/1 system-ui, sans-serif;
+    padding: 10px 14px;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+  }
+  .ks-del-btn:hover { background: #fef3f2; }
+  .ks-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .ks-modal-overlay.is-open { display: flex; }
+  .ks-modal {
+    background: #fff;
+    color: #111;
+    border-radius: 12px;
+    padding: 24px;
+    width: min(440px, 90vw);
+    font: 14px/1.5 system-ui, sans-serif;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  }
+  .ks-modal h3 { margin: 0 0 8px; font-size: 16px; }
+  .ks-modal p { margin: 0 0 20px; color: #555; }
+  .ks-modal .ks-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .ks-modal button {
+    font: 600 13px/1 system-ui, sans-serif;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: none;
+    color: #111;
+  }
+  .ks-modal button.ks-danger {
+    background: #b42318;
+    border-color: #b42318;
+    color: #fff;
+  }
+  .ks-modal button.ks-danger:hover { background: #912018; }
+  `;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.append(styleEl);
+  const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+
+  const toggle = document.createElement('button');
+  toggle.className = 'ks-prev-toggle';
+  toggle.type = 'button';
+  toggle.textContent = '▶ Предпросмотр';
+
+  const panel = document.createElement('div');
+  panel.className = 'ks-prev-panel';
+  panel.innerHTML = `
+    <div class="ks-prev-head">
+      <span class="ks-prev-path"></span>
+      <button type="button" data-act="refresh">⟳ Обновить</button>
+      <button type="button" data-act="open">↗ В новой вкладке</button>
+      <button type="button" data-act="close">✕</button>
+    </div>
+    <iframe class="ks-prev-frame" title="Предпросмотр страницы"></iframe>
+  `;
+
+  document.body.append(toggle, panel);
+  const pathLabel = panel.querySelector('.ks-prev-path');
+  const frame = panel.querySelector('.ks-prev-frame');
+
+  // URL живой страницы по текущему маршруту админки; null — превью не для чего
+  function previewUrl() {
+    const m = location.pathname.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    if (m) return `${base}/cases/${decodeURIComponent(m[1])}`;
+    if (/^\/keystatic\/singleton\/settings/.test(location.pathname)) return `${base}/`;
+    return null;
+  }
+
+  let currentUrl = null;
+  function sync() {
+    const url = previewUrl();
+    toggle.style.display = url ? '' : 'none';
+    if (!url || !document.body.classList.contains('ks-prev-open')) {
+      pathLabel.textContent = url ?? '';
+      return;
+    }
+    if (url !== currentUrl) {
+      currentUrl = url;
+      pathLabel.textContent = url;
+      frame.src = url; // смена slug → загрузка другой страницы
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    document.body.classList.toggle('ks-prev-open');
+    sync();
+  });
+  panel.querySelector('[data-act="close"]').addEventListener('click', () => {
+    document.body.classList.remove('ks-prev-open');
+    toggle.textContent = '▶ Предпросмотр';
+  });
+  panel.querySelector('[data-act="refresh"]').addEventListener('click', () => {
+    if (currentUrl) frame.src = currentUrl; // перезагрузка после Save
+  });
+  panel.querySelector('[data-act="open"]').addEventListener('click', () => {
+    if (currentUrl) window.open(currentUrl, '_blank');
+  });
+
+  // SPA-роутинг Keystatic: history.pushState/replaceState + popstate
+  const fire = () => window.dispatchEvent(new Event('ks:navigate'));
+  for (const method of ['pushState', 'replaceState']) {
+    const orig = history[method].bind(history);
+    history[method] = (...args) => { orig(...args); fire(); };
+  }
+  window.addEventListener('popstate', fire);
+  window.addEventListener('ks:navigate', sync);
+  sync();
+
+  // --- Волна AF (фидбек 2026-09-30): отдельная кнопка удаления кейса
+  // с подтверждением (модал вместо штатного «Delete entry…» в меню).
+  // Удаление — POST /api/keystatic/update { deletions: [{path}] }.
+  const delBtn = document.createElement('button');
+  delBtn.className = 'ks-del-btn';
+  delBtn.type = 'button';
+  delBtn.textContent = '🗑 Удалить кейс';
+  delBtn.style.display = 'none';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'ks-modal-overlay';
+  overlay.innerHTML = `
+    <div class="ks-modal" role="dialog" aria-modal="true" aria-labelledby="ks-del-title">
+      <h3 id="ks-del-title">Удалить кейс?</h3>
+      <p>Кейс <b class="ks-del-slug"></b> будет удалён безвозвратно (файл YAML + запись в коллекции). Действие нельзя отменить.</p>
+      <div class="ks-modal-actions">
+        <button type="button" data-act="cancel">Отмена</button>
+        <button type="button" class="ks-danger" data-act="confirm">Удалить</button>
+      </div>
+    </div>
+  `;
+  document.body.append(delBtn, overlay);
+
+  function currentCaseSlug() {
+    const m = location.pathname.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function syncDelBtn() {
+    delBtn.style.display = currentCaseSlug() ? '' : 'none';
+  }
+  window.addEventListener('ks:navigate', syncDelBtn);
+  syncDelBtn();
+
+  delBtn.addEventListener('click', () => {
+    overlay.querySelector('.ks-del-slug').textContent = currentCaseSlug() ?? '';
+    overlay.classList.add('is-open');
+  });
+  overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => overlay.classList.remove('is-open'));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('is-open'); // клик по фону = отмена
+  });
+  overlay.querySelector('[data-act="confirm"]').addEventListener('click', async () => {
+    const slug = currentCaseSlug();
+    if (!slug) return;
+    const res = await fetch('/api/keystatic/update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'no-cors': '1' },
+      body: JSON.stringify({ additions: [], deletions: [{ path: 'src/content/cases/' + slug + '.yaml' }] }),
+    });
+    if (res.ok) {
+      overlay.classList.remove('is-open');
+      location.href = '/keystatic/collection/cases'; // уходим на список (админка на чистом /keystatic, без base!)
+    } else {
+      alert('Не удалось удалить кейс (HTTP ' + res.status + '). Попробуйте штатное меню «Delete entry…».');
+    }
+  });
+
+  // Автообновление превью после сохранения: Keystatic дергает POST /api/keystatic/update
+  const origFetch = window.fetch.bind(window);
+  window.fetch = (...args) =>
+    origFetch(...args).then((res) => {
+      const url = typeof args[0] === 'string' ? args[0] : args[0]?.url ?? '';
+      if (url.includes('/api/keystatic/update') && res.ok) setTimeout(() => {
+        if (currentUrl && document.body.classList.contains('ks-prev-open')) frame.src = currentUrl;
+      }, 1200);
+      return res;
+    });
+</script>
