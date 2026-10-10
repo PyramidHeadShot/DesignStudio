@@ -14,7 +14,7 @@ export default config({
   ui: {
     brand: { name: 'АТОМ СЭИЛС — админка' },
     // группа «Контент» + коллекция «Кейсы» — иначе сайдбар дублирует «Кейсы / Кейсы»
-    navigation: { Контент: ['cases'], Настройки: ['settings'] },
+    navigation: { Контент: ['cases'], Настройки: ['settings', 'contacts', 'company'] },
   },
   collections: {
     cases: collection({
@@ -50,14 +50,38 @@ export default config({
         name: fields.text({ label: 'Название студии', defaultValue: 'АТОМ СЭИЛС' }),
         heroTitle: fields.text({ label: 'Слоган героя', defaultValue: 'Работы, а не слова.' }),
         heroText: fields.text({ label: 'Бегущая строка — услуги, разделитель ◆' }),
+      },
+    }),
+    // Волна AL (2026-09-30): отдельная настройка страницы «Контакты»
+    contacts: singleton({
+      label: 'Страница «Контакты»',
+      path: 'src/content/contacts',
+      format: { data: 'json' },
+      schema: {
         phone: fields.text({ label: 'Телефон', defaultValue: '+7 (927) 891-08-34' }),
         email: fields.text({ label: 'Email', defaultValue: 'hello@example.com' }),
-        // Волна AG (фидбек 2026-09-30): контактный блок — все поля необязательные,
-        // пустые не рендерятся в футере
-        address: fields.text({ label: 'Адрес (необязательно)' }),
+        address: fields.text({ label: 'Фактический адрес (для страницы «Контакты» и футера)' }),
         workHours: fields.text({ label: 'Часы работы (необязательно)' }),
         telegram: fields.text({ label: 'Telegram — @ник или ссылка (необязательно)' }),
         vk: fields.text({ label: 'VK — ссылка (необязательно)' }),
+        aboutText: fields.text({
+          label: 'Текст «О компании» (необязательно)',
+          multiline: true,
+        }),
+      },
+    }),
+    // Волна AM (2026-09-30): реквизиты компании — редактируются в админке
+    company: singleton({
+      label: 'Реквизиты компании',
+      path: 'src/content/company',
+      format: { data: 'json' },
+      schema: {
+        fullName: fields.text({ label: 'Полное наименование' }),
+        opf: fields.text({ label: 'Организационно-правовая форма' }),
+        ogrn: fields.text({ label: 'ОГРН' }),
+        inn: fields.text({ label: 'ИНН' }),
+        kpp: fields.text({ label: 'КПП' }),
+        legalAddress: fields.text({ label: 'Юридический адрес', multiline: true }),
       },
     }),
   },

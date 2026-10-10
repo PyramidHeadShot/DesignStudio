@@ -163,8 +163,8 @@ html.js .site-nav a { display: inline-block; }
 .ticker:hover .ticker-track { animation-play-state: paused; }
 .ticker, .ticker-g { font-size: 19px; }
 .ticker-g { display: inline-flex; align-items: baseline; }
-.ticker-u { margin-right: 20px; }
-.ticker-dot { color: var(--color-accent); margin-left: 4px; }
+.ticker-u { margin-right: 0; } /* интервалы даёт ромб-спан — одинаковые по всему треку, включая стык повторов */
+.ticker-dot { color: var(--color-accent); margin: 0 12px; }
 @keyframes ticker-scroll {
   from { transform: translateX(0); }
   to { transform: translateX(-50%); }
@@ -277,7 +277,7 @@ html.js .work-filters { visibility: visible; }
   transition: text-decoration-color 0.3s ease; /* тонкий акцент на интерактиве (правило 5) */
 }
 .work-card:hover figcaption { text-decoration-color: currentColor; }
-.work-card figcaption span { color: var(--muted); }
+.work-card figcaption span { color: var(--muted); display: block; margin-top: 2px; }
 
 /* --- Страница кейса: задача → процесс → результат, крупные изображения ---
    CLS: явный line-height у заголовка — разбиение на слова (.w/.wi) и swap
@@ -435,6 +435,26 @@ html.js .work-card:hover figcaption { text-decoration-color: transparent; }
 @media (max-width: 480px) {
   .contacts-row { grid-template-columns: 1fr; gap: 4px; }
 }
+.contacts-note {
+  margin-top: calc(var(--pad) * 1.25);
+  max-width: 62ch;
+  font-size: 13px;
+  color: var(--color-ink-muted);
+}
+.contacts-section h2 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--color-ink-muted);
+  margin: calc(var(--pad) * 0.75) 0 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-line);
+}
+.contacts-section:first-of-type h2 { margin-top: 0; }
+.contacts-row--big dd { font-size: 20px; }
+.contacts-requisites { margin-top: 0; }
+.contacts-requisites .contacts-row dd { font-size: 15px; }
 
 /* --- Футер: fade-up + прорисовка линии при входе в вьюпорт --- */
 html.js .site-footer {

@@ -21,6 +21,11 @@ const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
 // фразы в ОДНОЙ половине трека: половина ≥ ширины вьюпорта → бесшовный -50% loop
 // даже на широких экранах (~4300px на повтор).
 const TICKER_REPS = 10;
+// Волна AI: фраза тикера режется по ◆ из настроек — каждый сервис + акцентный
+// ромб-спан (как в исходном дизайне); на стыке повторов ромб тоже есть (раньше
+// пропадал). Статичный экземпляр для скринридеров — строка с ◆-разделителями.
+const tickerParts = SITE.heroText.split('◆').map((p) => p.trim()).filter(Boolean);
+const tickerStatic = tickerParts.join(' ◆ ');
 // Волна L: линейные SVG-пиктограммы фильтров (демо №13). Единый язык: сетка 18×18,
 // stroke 1.5, round, currentColor, без заливок; pathLength=100 — как у uline (draw).
 const ICONS: Record<string, string> = {
@@ -43,10 +48,20 @@ const ICONS: Record<string, string> = {
          при prefers-reduced-motion становится видимой статичной фразой), весь
          визуальный трек aria-hidden. Разделитель — акцентная точка · -->
     <p class="ticker">
-      <span class="ticker-static">{SITE.heroText}</span>
+      <span class="ticker-static">{tickerStatic}</span>
       <span class="ticker-viewport" aria-hidden="true">
         <span class="ticker-track">
-          {[0, 1].map((h) => (<span class="ticker-g">{Array.from({ length: TICKER_REPS }).map(() => <span class="ticker-u">{SITE.heroText}</span>)}</span>))}
+          {[0, 1].map((h) => (
+            <span class="ticker-g">
+              {Array.from({ length: TICKER_REPS }).map(() => (
+                <span class="ticker-u">
+                  {/* Волна AI: ромбы — акцентные спаны (как в исходном дизайне):
+                      одинаковый вид и внутри фразы, и на стыке повторов трека */}
+                  {tickerParts.map((part) => (<>{part}<span class="ticker-dot">◆</span></>))}
+                </span>
+              ))}
+            </span>
+          ))}
         </span>
       </span>
     </p>
@@ -89,7 +104,10 @@ const ICONS: Record<string, string> = {
               )}
             </div>
             <figcaption>
-              {c.data.title} <span>— {c.data.category}</span>
+              {/* Волна AN (фидбек 2026-09-30): категория — отдельной строкой под
+                  названием, без тире-разделителя */}
+              {c.data.title}
+              <span>{c.data.category}</span>
             </figcaption>
           </figure>
           </div>

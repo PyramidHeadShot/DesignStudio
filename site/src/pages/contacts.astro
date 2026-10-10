@@ -1,7 +1,9 @@
 ---
-// Волна AH (2026-09-30): отдельная страница контактов.
-// Данные — из синглтона «Настройки сайта» (Keystatic), фон — «Исходники/Главный фон.jpg»
-// через astro:assets (src/assets, конвертируется в webp на сборке).
+// Волна AK (2026-09-30): страница контактов по практике РФ-сайтов:
+// способы связи → адрес → реквизиты компании → примечание об обработке ПД
+// (152-ФЗ) со ссылкой на политику конфиденциальности.
+// Контактные данные — из синглтона «Настройки сайта» (Keystatic);
+// реквизиты и тексты — статичные (меняются редко).
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import { SITE } from '../config';
@@ -9,12 +11,11 @@ import bg from '../assets/contact-bg.jpg';
 
 const phoneHref = SITE.phone.replace(/[^+\d]/g, '');
 const vkHost = SITE.vk.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+const tgHost = SITE.telegram.replace(/^https?:\/\//, '');
 ---
 
-<Base title={`Контакты — ${SITE.name}`} description={`Связаться со студией ${SITE.name}: ${SITE.phone}, ${SITE.address}. Telegram и VK.`}>
+<Base title={`Контакты — ${SITE.name}`} description={`Связаться со студией ${SITE.name}: ${SITE.phone}, ${SITE.address}. Telegram и VK. Реквизиты компании.`}>
   <article class="container case contacts">
-    <!-- Фон-баннер: декоративный (alt=""), во всю ширину до нативных 1822px,
-         дальше — центрируется без апскейла -->
     <Image class="contacts-hero" src={bg} width={1822} height={728} alt="" loading="eager" decoding="async" />
 
     <header class="case-head">
@@ -22,33 +23,92 @@ const vkHost = SITE.vk.replace(/^https?:\/\//, '').replace(/\/+$/, '');
       <p style="color:var(--muted)">Напишите или позвоните — обсудим вашу задачу</p>
     </header>
 
-    <dl class="contacts-list">
-      <div class="contacts-row">
-        <dt>Телефон</dt>
-        <dd><a href={`tel:${phoneHref}`}>{SITE.phone}</a></dd>
-      </div>
-      <div class="contacts-row">
-        <dt>Email</dt>
-        <dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd>
-      </div>
-      <div class="contacts-row">
-        <dt>Адрес</dt>
-        <dd>{SITE.address}</dd>
-      </div>
-      {SITE.workHours && (
-        <div class="contacts-row">
-          <dt>Часы работы</dt>
-          <dd>{SITE.workHours}</dd>
+    <!-- Способы связи: крупные кликабельные строки -->
+    <section class="contacts-section" aria-labelledby="c-methods">
+      <h2 id="c-methods">Связаться с нами</h2>
+      <dl class="contacts-list">
+        <div class="contacts-row contacts-row--big">
+          <dt>Телефон</dt>
+          <dd><a href={`tel:${phoneHref}`}>{SITE.phone}</a></dd>
         </div>
-      )}
-      <div class="contacts-row">
-        <dt>Telegram</dt>
-        <dd><a href={SITE.telegram} target="_blank" rel="noopener noreferrer">{SITE.telegram.replace(/^https?:\/\//, '')}</a></dd>
-      </div>
-      <div class="contacts-row">
-        <dt>VK</dt>
-        <dd><a href={SITE.vk} target="_blank" rel="noopener noreferrer">{vkHost}</a></dd>
-      </div>
-    </dl>
+        <div class="contacts-row contacts-row--big">
+          <dt>Email</dt>
+          <dd><a href={`mailto:${SITE.email}`}>{SITE.email}</a></dd>
+        </div>
+        <div class="contacts-row contacts-row--big">
+          <dt>Telegram</dt>
+          <dd><a href={SITE.telegram} target="_blank" rel="noopener noreferrer">{tgHost}</a></dd>
+        </div>
+        <div class="contacts-row contacts-row--big">
+          <dt>VK</dt>
+          <dd><a href={SITE.vk} target="_blank" rel="noopener noreferrer">{vkHost}</a></dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- Адрес и режим работы -->
+    <section class="contacts-section" aria-labelledby="c-address">
+      <h2 id="c-address">Адрес</h2>
+      <dl class="contacts-list">
+        <div class="contacts-row">
+          <dt>Фактический адрес</dt>
+          <dd>{SITE.address}</dd>
+        </div>
+        {SITE.workHours && (
+          <div class="contacts-row">
+            <dt>Часы работы</dt>
+            <dd>{SITE.workHours}</dd>
+          </div>
+        )}
+      </dl>
+    </section>
+
+    <!-- «О компании» — из настроек админки (синглтон «Реквизиты компании») -->
+    {SITE.aboutText && (
+      <section class="contacts-section" aria-labelledby="c-about">
+        <h2 id="c-about">О компании</h2>
+        <p class="contacts-about-text">{SITE.aboutText}</p>
+      </section>
+    )}
+
+    <!-- Реквизиты компании (практика РФ: полные данные оператора на сайте) -->
+    <section class="contacts-section" aria-labelledby="c-requisites">
+      <h2 id="c-requisites">Реквизиты компании</h2>
+      <dl class="contacts-list contacts-requisites">
+        <div class="contacts-row">
+          <dt>Полное наименование</dt>
+          <dd>{SITE.fullName}</dd>
+        </div>
+        <div class="contacts-row">
+          <dt>Организационно-правовая форма</dt>
+          <dd>{SITE.opf}</dd>
+        </div>
+        <div class="contacts-row">
+          <dt>ОГРН</dt>
+          <dd>{SITE.ogrn}</dd>
+        </div>
+        <div class="contacts-row">
+          <dt>ИНН</dt>
+          <dd>{SITE.inn}</dd>
+        </div>
+        <div class="contacts-row">
+          <dt>КПП</dt>
+          <dd>{SITE.kpp}</dd>
+        </div>
+        <div class="contacts-row">
+          <dt>Юридический адрес</dt>
+          <dd>{SITE.legalAddress}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <!-- Примечание: сайт не собирает и не обрабатывает персональные данные
+         (нет форм обратной связи, систем аналитики и cookies) -->
+    <p class="contacts-note">
+      Сайт не собирает и не обрабатывает персональные данные: здесь нет форм
+      обратной связи, систем аналитики и файлов cookie. Если вы обращаетесь
+      к нам по телефону, email или в мессенджерах — это обычное обращение,
+      мы используем его только для ответа по существу.
+    </p>
   </article>
 </Base>

@@ -157,6 +157,8 @@ import { Keystatic } from './keystatic-entry.js';
     const m = location.pathname.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
     if (m) return `${base}/cases/${decodeURIComponent(m[1])}`;
     if (/^\/keystatic\/singleton\/settings/.test(location.pathname)) return `${base}/`;
+    if (/^\/keystatic\/singleton\/contacts/.test(location.pathname)) return `${base}/contacts/`;
+    if (/^\/keystatic\/singleton\/company/.test(location.pathname)) return `${base}/contacts/`;
     return null;
   }
 
