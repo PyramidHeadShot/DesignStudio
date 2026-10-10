@@ -11,12 +11,16 @@ const categories = [
 
 export default config({
   // Волна AO: в dev — локальное хранилище (правим файлы напрямую), в проде —
-  // GitHub-репозиторий: Save в админке = коммит, дальше GitHub Actions
-  // пересобирает и выкладывает сайт. Авторизация — через Keystatic Cloud
-  // (см. PUBLIC_KEYSTATIC_GITHUB_APP_SLUG в workflow).
+  // Keystatic Cloud (проект atom-seilsatom-seils/designstudio): Save в админке
+  // = запись в Cloud + коммит в привязанный GitHub-репозиторий, дальше
+  // GitHub Actions пересобирает и выкладывает сайт. Авторизация — через
+  // GitHub-логин (доступ только у collaborators репозитория).
   storage: import.meta.env.DEV
     ? { kind: 'local' }
-    : { kind: 'github', repo: 'PyramidHeadShot/DesignStudio' },
+    : { kind: 'cloud' },
+  cloud: import.meta.env.DEV
+    ? undefined
+    : { project: 'atom-seilsatom-seils/designstudio' },
   ui: {
     brand: { name: 'АТОМ СЭИЛС — админка' },
     // группа «Контент» + коллекция «Кейсы» — иначе сайдбар дублирует «Кейсы / Кейсы»
