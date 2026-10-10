@@ -1,8 +1,7 @@
-// Волна AC: точка входа UI Keystatic (как внутренний keystatic-page.js
-// официального плагина, но реэкспортируемая через правильный exports-путь
-// '@keystatic/astro/ui' — сам internal/keystatic-page.js из exports-маппы
-// пакета не импортируется). Используется обёрткой keystatic-page.astro,
-// которая добавляет панель предпросмотра.
+// Волна AO: точка входа UI Keystatic. Конфиг — через virtual:keystatic-config
+// (резолвер в astro.config.mjs работает и в dev, и в build) — прямой импорт
+// дублирует React/yjs в клиентском графе (проверено 2026-09-30).
+// Используется обёрткой src/pages/keystatic.astro (панель предпросмотра).
 import { makePage } from '@keystatic/astro/ui';
 import config from 'virtual:keystatic-config';
 

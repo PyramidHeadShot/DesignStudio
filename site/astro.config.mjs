@@ -3,22 +3,64 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import mdx from '@astrojs/mdx';
 import react from '@astrojs/react';
 
-// Волна Z: админка Keystatic — только в dev (static build без adapter не может
-// иметь SSR-роутов: официальный плагин @keystatic/astro инжектит prerender:false
-// и ломает билд). Роуты /keystatic и /api/keystatic инжектятся ТОЛЬКО при dev;
-// в проде админка недоступна (данные правятся локально и коммитятся).
-// Открыть: http://localhost:4321/keystatic (без base-префикса!).
+// Волна Z→AO: админка Keystatic.
+// — Страница админки — обычный файл src/pages/keystatic.astro (статика в проде,
+//   работает и в dev): с GitHub-хранилищем серверные роуты не нужны.
+// — В dev дополнительно инжектятся API-роуты /api/keystatic/* (local-хранилище
+//   пишет файлы на диск) и работает мост base-пути (роутер Keystatic зашит на
+//   «/keystatic», а Astro с base '/DesignStudio' отдаёт html только по base-пути).
+// — В build патчим строки «/keystatic» в dist @keystatic/core на base-путь,
+//   иначе на GitHub Pages роутер показывает «Not found».
+// Открыть в dev: http://localhost:4321/keystatic (без base-префикса!).
 function keystaticDev() {
   return {
     name: 'keystatic-dev-routes',
     hooks: {
       'astro:config:setup': ({ injectRoute, updateConfig, command, config }) => {
+        const base = config.base.replace(/\/+$/, '');
+
+        // Волна AO: патч base-пути для прод-сборки (роутер и ссылки Keystatic)
+        if (command === 'build' && base !== '/') {
+          updateConfig({
+            vite: {
+              plugins: [
+                {
+                  name: 'keystatic-base-patch',
+                  transform(code, id) {
+                    if (!id.includes(`@keystatic/core/dist/`)) return null;
+                    const baseRe = base.split('/').join(`\\/`);
+                    let out = code
+                      .replaceAll('"/keystatic', `"${base}/keystatic`)
+                      .replaceAll("'/keystatic", `'${base}/keystatic`)
+                      .split(`/^\\/keystatic\\/?/`).join(`/^(?:${baseRe})?\\/keystatic\\/?/`);
+                    return out === code ? null : { code: out, map: null };
+                  },
+                },
+              ],
+            },
+          });
+        }
+
+        // резолвер virtual:keystatic-config — в dev И в build (страница админки статическая)
+        updateConfig({
+          vite: {
+            plugins: [
+              {
+                name: 'keystatic-config-resolver',
+                resolveId(id) {
+                  if (id === 'virtual:keystatic-config') return this.resolve('./keystatic.config', './a');
+                  return null;
+                },
+              },
+            ],
+          },
+        });
+
         if (command === 'dev') {
-          // Мост base-пути для UI Keystatic (см. большой комментарий ниже):
-          // unshift-им рерайтер в САМОЕ начало connect-стека через post-hook
-          // configureServer — так он оказывается ПЕРЕД baseMiddleware Astro,
-          // который иначе 404-ит html-запросы вне base (порядок проверен
-          // по исходникам astro/dist/vite-plugin-astro-server/plugin.js).
+          // Мост base-пути для UI Keystatic: unshift-им рерайтер в САМОЕ начало
+          // connect-стека через post-hook configureServer — так он оказывается
+          // ПЕРЕД baseMiddleware Astro, который иначе 404-ит html-запросы вне base
+          // (порядок проверен по исходникам astro/dist/vite-plugin-astro-server/plugin.js).
           updateConfig({
             vite: {
               plugins: [
@@ -32,7 +74,7 @@ function keystaticDev() {
                           const u = req.url || '';
                           if (u === '/keystatic' || u.startsWith('/keystatic/') ||
                               u === '/api/keystatic' || u.startsWith('/api/keystatic/')) {
-                            req.url = '/DesignStudio' + u;
+                            req.url = base + u;
                           }
                           next();
                         },
@@ -43,28 +85,7 @@ function keystaticDev() {
               ],
             },
           });
-          // резолвер virtual:keystatic-config (как в официальном плагине)
-          updateConfig({
-            vite: {
-              plugins: [
-                {
-                  name: 'keystatic-config-resolver',
-                  resolveId(id) {
-                    if (id === 'virtual:keystatic-config') return this.resolve('./keystatic.config', './a');
-                    return null;
-                  },
-                },
-              ],
-              // Скан-файл как у официального плагина @keystatic/astro: заставляет
-              // esbuild пройтись по ВСЕМУ графу Keystatic (включая raw-subpath'и
-              // react-aria/react-stately и CJS-транзитивки) и пре-бандлить их
-              // единообразно. Без него часть графа грузится сырьём → дубли
-              // React-контекстов («outside of KeystarProvider») в редакторе кейса.
-              optimizeDeps: {
-                entries: ['keystatic.config.*', '.astro/keystatic-imports.js'],
-              },
-            },
-          });
+
           // Скан-файл импортов (создаётся при каждом dev-старте, как в официальном плагине)
           const dotAstroDir = new URL('./.astro/', config.root);
           mkdirSync(dotAstroDir, { recursive: true });
@@ -75,20 +96,8 @@ function keystaticDev() {
             // зависимости и так приходят через keystatic.config.* (см. entries выше)
             'import "@keystatic/astro/ui";\nimport "@keystatic/core/ui";\n'
           );
-          // Роутер Keystatic жёстко зашит на путь /keystatic (RouterProvider в
-          // @keystatic/core стрипает /^\/keystatic\/?/), а API-запросы UI идут на
-          // абсолютный /api/keystatic/... — оба без base-префикса. Astro dev при
-          // base '/DesignStudio' 404-ит html-навигацию вне base (baseMiddleware).
-          // Мост keystatic-base-bridge (выше) рерайтит «чистые» пути на base-путь
-          // до baseMiddleware, а тот их стрипает обратно — Astro видит обычный
-          // внутренний путь, браузер — /keystatic, как ожидает роутер Keystatic.
-          injectRoute({
-            // своя обёртка над официальной страницей: добавляет панель предпросмотра
-            // (см. src/keystatic/keystatic-page.astro)
-            entrypoint: './src/keystatic/keystatic-page.astro',
-            pattern: '/keystatic/[...params]',
-            prerender: false,
-          });
+          // Страница админки — обычный файл src/pages/keystatic.astro (статика).
+          // Инжектятся только API-роуты local-хранилища (dev).
           injectRoute({
             entrypoint: 'C:/Yandex.Disk/DesignStudio/site/src/keystatic/keystatic-api.ts',
             // catch-all обязателен: UI Keystatic дергает не только tree/update,

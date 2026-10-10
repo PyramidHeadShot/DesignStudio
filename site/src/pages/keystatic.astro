@@ -5,7 +5,7 @@
 // сохранения (перехват POST /api/keystatic/update). Подключается в
 // astro.config.mjs вместо @keystatic/astro/internal/keystatic-astro-page.astro
 // (роут инжектится только в dev).
-import { Keystatic } from './keystatic-entry.js';
+import { Keystatic } from '../keystatic/keystatic-entry.js';
 ---
 
 <Keystatic client:only="react" />
@@ -130,6 +130,9 @@ import { Keystatic } from './keystatic-entry.js';
   styleEl.textContent = css;
   document.head.append(styleEl);
   const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+  // Волна AO: в проде админка живёт на {base}/keystatic — стрипаем base перед
+  // разбором маршрута (в dev URL «чистый» — стрип не мешает)
+  const stripBase = (p) => (base && p.startsWith(base) ? p.slice(base.length) : p);
 
   const toggle = document.createElement('button');
   toggle.className = 'ks-prev-toggle';
@@ -154,11 +157,12 @@ import { Keystatic } from './keystatic-entry.js';
 
   // URL живой страницы по текущему маршруту админки; null — превью не для чего
   function previewUrl() {
-    const m = location.pathname.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    const p = stripBase(location.pathname);
+    const m = p.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
     if (m) return `${base}/cases/${decodeURIComponent(m[1])}`;
-    if (/^\/keystatic\/singleton\/settings/.test(location.pathname)) return `${base}/`;
-    if (/^\/keystatic\/singleton\/contacts/.test(location.pathname)) return `${base}/contacts/`;
-    if (/^\/keystatic\/singleton\/company/.test(location.pathname)) return `${base}/contacts/`;
+    if (/^\/keystatic\/singleton\/settings/.test(p)) return `${base}/`;
+    if (/^\/keystatic\/singleton\/contacts/.test(p)) return `${base}/contacts/`;
+    if (/^\/keystatic\/singleton\/company/.test(p)) return `${base}/contacts/`;
     return null;
   }
 
@@ -223,10 +227,13 @@ import { Keystatic } from './keystatic-entry.js';
       </div>
     </div>
   `;
-  document.body.append(delBtn, overlay);
+  // Волна AO: кнопка удаления и автообновление превью — только в dev (local-хранилище).
+  // В проде (GitHub-хранилище) удаление — штатное меню «Delete entry…» (коммит в репо).
+  if (import.meta.env.DEV) {
+    document.body.append(delBtn, overlay);
 
   function currentCaseSlug() {
-    const m = location.pathname.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    const m = stripBase(location.pathname).match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
     return m ? decodeURIComponent(m[1]) : null;
   }
 
@@ -270,4 +277,5 @@ import { Keystatic } from './keystatic-entry.js';
       }, 1200);
       return res;
     });
+  }
 </script>
