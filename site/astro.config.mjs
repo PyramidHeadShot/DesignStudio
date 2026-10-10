@@ -43,7 +43,7 @@ function keystaticDev() {
                       .replaceAll("'/keystatic", `'${base}/keystatic`)
                       .replaceAll('`/keystatic/cloud/oauth/callback', `'${base}/keystatic/cloud/oauth/callback`)
                       .replaceAll('}/keystatic/cloud/oauth/callback', '}' + base + '/keystatic/cloud/oauth/callback')
-                      .split(`/^\\/keystatic\\/?/`).join(`/^(?:${baseRe})?\\/keystatic\\/?/`);
+                      .split(`/^\\/keystatic\\/?/`).join(`/^(?:${baseRe})?\\/keystatic\\/?|\\/$/g`);
                     return out === code ? null : { code: out, map: null };
                   },
                 },
