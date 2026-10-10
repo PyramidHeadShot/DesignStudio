@@ -24,7 +24,7 @@
 
 ## Ключевые факты
 
-- WoL ПК: розетка Tapo P110 (придёт 29.09) + BIOS «Restore on AC Power Loss = Power On» (включено)
+- WoL ПК: розетка Tapo P110 (установлена, проверена 30.09.2026 — включение ПК с работы извне работает) + BIOS «Restore on AC Power Loss = Power On» (включено)
 - SSH-доступ с НОУТ к ПК: `ssh Vladimir@100.68.240.52` — без пароля (ключ настроен)
 - Сон ПК: отключён (`powercfg -change standby-timeout-ac 0`) — вернуть, когда WG заработает:
   `powercfg -change standby-timeout-ac 30`

@@ -5,11 +5,10 @@
 
 ## Требования
 
-В pi должны быть установлены два пакета:
+Нужен пакет pi-subagents; MCP-поддержка встроена в pi 0.99+ (отдельный пакет не нужен):
 
 ```bash
 pi install npm:pi-subagents     # субагенты (subagent-инструмент, discovery .pi/agents/)
-pi install npm:pi-mcp-adapter   # MCP-серверы (читает .pi/mcp.json)
 ```
 
 После установки перезапусти pi. При первом запуске в проекте pi спросит доверие к папке (trust) — это нормально: папка содержит проектные расширения и конфиги.
@@ -18,7 +17,7 @@ pi install npm:pi-mcp-adapter   # MCP-серверы (читает .pi/mcp.json)
 
 | Файл | Назначение |
 |------|-----------|
-| `mcp.json` | MCP-серверы проекта (Pi project override — высший приоритет в pi-mcp-adapter) |
+| `mcp.json` | MCP-серверы проекта (встроенный MCP pi 0.99+; проектный override глобального `~/.pi/agent/mcp.json`) |
 | `settings.json` | Настройки pi проекта: сессии хранятся здесь же (`.pi/sessions/`, gitignored) |
 | `agents/*.md` | Определения субагентов (pi-subagents: frontmatter + системный промпт) |
 | `prompts/*.md` | Промпт-шаблоны: слэш-команды `/onboard`, `/tasks`, `/test`, `/fix-tests`, `/deploy`, `/page` |
@@ -36,10 +35,10 @@ pi install npm:pi-mcp-adapter   # MCP-серверы (читает .pi/mcp.json)
 | `ssh-connect` | `scripts/ssh.sh` → `npx ssh-mcp` | Shell на удалённом сервере |
 | `sftp-connect` | `scripts/sftp.sh` → `npx sftp-ssh-mcp` | Передача файлов на/с сервера |
 
-- Для ssh/sftp скопируй `.env.example` → `.env` и заполни креды. `.env` gitignored.
+- Для ssh/sftp скопируй `.env.example` → `.env` и заполни креды, затем сними `"enabled": false` у `ssh-connect`/`sftp-connect` в `mcp.json`. `.env` gitignored.
 - Chrome CDP: Chrome должен быть запущен с `--remote-debugging-port=9222` (или агент запустит его сам, если это поддерживает твой сценарий).
-- `directTools: true` регистрирует инструменты сервера напрямую (не через прокси `mcp`). Если не нужны все — поставь `false` и вызывай через `mcp({ tool: ... })`.
-- Серверы ленивые: подключаются при первом вызове инструмента.
+- `exposure: "direct"` объявляет инструменты сервера модели напрямую (замена `directTools: true` из pi-mcp-adapter). Другие режимы: `codemode` (доступны из codemode-скриптов), `deferred` (подгрузка через `tool_search`), `hidden` (модели не видны).
+- `"enabled": false` у сервера держит запись в конфиге без подключения (по умолчанию так отключены ssh/sftp).
 
 ## Субагенты
 
@@ -65,7 +64,7 @@ defaultReads: docs/SOME-GUIDE.md             # файлы, читаемые пе
 Правила, проверенные на практике:
 
 - **Allowlist вместо deny-списка**: перечисли только нужные `tools` — всё остальное (включая `subagent` и чужие MCP) отсечётся само. `excludeTools` — только для точечных запретов внутри разрешённого сервера.
-- `mcp:<server>` даёт ребёнку весь сервер; `mcp:<server>/<tool>` — отдельный инструмент. Точные имена инструментов зависят от MCP-сервера — сверяйся через `mcp({ search: ... })`.
+- `mcp:<server>` даёт ребёнку весь сервер; `mcp:<server>/<tool>` — отдельный инструмент. Точные имена инструментов зависят от MCP-сервера — сверяйся через `pi mcp list` или `tool_search`.
 - Не давай субагентам доступа к `.env` и секретам; креды живут в обёртках `scripts/*.sh`.
 - «Исполнитель не интерпретирует»: субагенты возвращают stdout/факты, решения принимает главный агент.
 

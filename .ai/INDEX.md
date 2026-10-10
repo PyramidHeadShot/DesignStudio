@@ -10,7 +10,6 @@
 | Тесты: запуск и написание | [`playbooks/testing.md`](playbooks/testing.md) | Работа с тестами |
 | Диагностика багов | [`playbooks/debugging.md`](playbooks/debugging.md) | Что-то сломалось, причина неизвестна |
 | Коммиты, ветки, релиз | [`playbooks/release.md`](playbooks/release.md) | Фиксация и публикация изменений |
-| Дизайн-стандарты сайта | [`standards/design-principles.md`](standards/design-principles.md) | Любая работа над UI сайта: чек-лист правил, референс pentagram, выбор стека |
 | Карточка проекта | [`templates/PROJECT.md`](templates/PROJECT.md) | Шаблон; заполняется при онбординге → `.ai/PROJECT.md` |
 | Шаблон проектного AGENTS.md | [`templates/AGENTS-project.md`](templates/AGENTS-project.md) | Создание/обновление AGENTS.md конкретного проекта |
 | Шаблон описания для пользователей | [`templates/OPISANIE.md`](templates/OPISANIE.md) | Создание/поддержка `Описание.md` в корне проекта |
