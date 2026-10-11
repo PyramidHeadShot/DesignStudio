@@ -253,6 +253,7 @@ html.js .work-filters { visibility: visible; }
   aspect-ratio: 4 / 3;
   background: var(--color-line); /* плейсхолдер до загрузки реальных работ */
   overflow: hidden;
+  border-radius: 12px; /* согласовано с .contacts-hero — единый радиус крупных фото */
 }
 .thumb img, .thumb .ph {
   position: absolute;
