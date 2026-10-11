@@ -1,0 +1,423 @@
+// Волна AW+: скрипт выполняется только в браузере (Astro SSR импортирует модуль
+// при сборке страницы — document недоступен на сервере).
+if (typeof document !== 'undefined') {
+// Волна AW: общий скрипт обёртки админки (панель предпросмотра, кнопки удаления/
+// перемещения, миниатюры галереи). Подключается из keystatic.astro и keystatic-route.astro.
+  // Стили инжектим из скрипта: Astro dev не прокидывает <style> .astro-страницы
+  // инжектнутого роута (проверено 2026-09-30).
+  const css = `
+  .ks-prev-toggle {
+    position: fixed;
+    left: 16px;
+    bottom: 16px;
+    z-index: 10000;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: #fff;
+    color: #111;
+    font: 600 13px/1 system-ui, sans-serif;
+    padding: 10px 14px;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+  }
+  body.ks-prev-open .ks-prev-toggle { left: calc(56vw + 16px); }
+  .ks-prev-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 56vw;
+    min-width: 380px;
+    height: 100vh;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    background: #fff;
+    border-left: 1px solid rgba(128, 128, 128, 0.35);
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+  }
+  body.ks-prev-open .ks-prev-panel { display: flex; }
+  .ks-prev-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.25);
+    font: 600 12px/1.2 system-ui, sans-serif;
+    color: #555;
+  }
+  .ks-prev-head .ks-prev-path {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ks-prev-head button {
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: none;
+    color: #111;
+    font: 600 12px/1 system-ui, sans-serif;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .ks-prev-head button:hover { background: rgba(0, 0, 0, 0.05); }
+  .ks-prev-frame { flex: 1; border: 0; width: 100%; }
+  body.ks-prev-open > div:not(.ks-prev-panel) { padding-right: 56vw; }
+  /* Кнопка удаления кейса + модальное подтверждение */
+  .ks-del-btn {
+    position: fixed;
+    left: 16px;
+    bottom: 64px;
+    z-index: 10000;
+    border: 1px solid rgba(200, 60, 60, 0.5);
+    background: #fff;
+    color: #b42318;
+    font: 600 13px/1 system-ui, sans-serif;
+    padding: 10px 14px;
+    border-radius: 999px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+    cursor: pointer;
+  }
+  .ks-del-btn:hover { background: #fef3f2; }
+  .ks-modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 10001;
+    background: rgba(0, 0, 0, 0.45);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+  .ks-modal-overlay.is-open { display: flex; }
+  .ks-modal {
+    background: #fff;
+    color: #111;
+    border-radius: 12px;
+    padding: 24px;
+    width: min(440px, 90vw);
+    font: 14px/1.5 system-ui, sans-serif;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+  }
+  .ks-modal h3 { margin: 0 0 8px; font-size: 16px; }
+  .ks-modal p { margin: 0 0 20px; color: #555; }
+  .ks-modal .ks-modal-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .ks-modal button {
+    font: 600 13px/1 system-ui, sans-serif;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    border: 1px solid rgba(128, 128, 128, 0.4);
+    background: none;
+    color: #111;
+  }
+  .ks-modal button.ks-danger {
+    background: #b42318;
+    border-color: #b42318;
+    color: #fff;
+  }
+  .ks-modal button.ks-danger:hover { background: #912018; }
+  `;
+  const styleEl = document.createElement('style');
+  styleEl.textContent = css;
+  document.head.append(styleEl);
+  const base = import.meta.env.BASE_URL.replace(/\/+$/, '');
+  // Волна AO: в проде админка живёт на {base}/keystatic — стрипаем base перед
+  // разбором маршрута (в dev URL «чистый» — стрип не мешает)
+  const stripBase = (p) => (base && p.startsWith(base) ? p.slice(base.length) : p);
+
+  const toggle = document.createElement('button');
+  toggle.className = 'ks-prev-toggle';
+  toggle.type = 'button';
+  toggle.textContent = '▶ Предпросмотр';
+
+  const panel = document.createElement('div');
+  panel.className = 'ks-prev-panel';
+  panel.innerHTML = `
+    <div class="ks-prev-head">
+      <span class="ks-prev-path"></span>
+      <button type="button" data-act="refresh">⟳ Обновить</button>
+      <button type="button" data-act="open">↗ В новой вкладке</button>
+      <button type="button" data-act="close">✕</button>
+    </div>
+    <iframe class="ks-prev-frame" title="Предпросмотр страницы"></iframe>
+  `;
+
+  document.body.append(toggle, panel);
+  const pathLabel = panel.querySelector('.ks-prev-path');
+  const frame = panel.querySelector('.ks-prev-frame');
+
+  // URL живой страницы по текущему маршруту админки; null — превью не для чего
+  function previewUrl() {
+    const p = stripBase(location.pathname);
+    const m = p.match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    if (m) return `${base}/cases/${decodeURIComponent(m[1])}`;
+    if (/^\/keystatic\/singleton\/settings/.test(p)) return `${base}/`;
+    if (/^\/keystatic\/singleton\/contacts/.test(p)) return `${base}/contacts/`;
+    if (/^\/keystatic\/singleton\/company/.test(p)) return `${base}/contacts/`;
+    return null;
+  }
+
+  let currentUrl = null;
+  function sync() {
+    const url = previewUrl();
+    toggle.style.display = url ? '' : 'none';
+    if (!url || !document.body.classList.contains('ks-prev-open')) {
+      pathLabel.textContent = url ?? '';
+      return;
+    }
+    if (url !== currentUrl) {
+      currentUrl = url;
+      pathLabel.textContent = url;
+      frame.src = url; // смена slug → загрузка другой страницы
+    }
+  }
+
+  toggle.addEventListener('click', () => {
+    document.body.classList.toggle('ks-prev-open');
+    sync();
+  });
+  panel.querySelector('[data-act="close"]').addEventListener('click', () => {
+    document.body.classList.remove('ks-prev-open');
+    toggle.textContent = '▶ Предпросмотр';
+  });
+  panel.querySelector('[data-act="refresh"]').addEventListener('click', () => {
+    if (currentUrl) frame.src = currentUrl; // перезагрузка после Save
+  });
+  panel.querySelector('[data-act="open"]').addEventListener('click', () => {
+    if (currentUrl) window.open(currentUrl, '_blank');
+  });
+
+  // SPA-роутинг Keystatic: history.pushState/replaceState + popstate
+  const fire = () => window.dispatchEvent(new Event('ks:navigate'));
+  for (const method of ['pushState', 'replaceState']) {
+    const orig = history[method].bind(history);
+    history[method] = (...args) => { orig(...args); fire(); };
+  }
+  window.addEventListener('popstate', fire);
+  window.addEventListener('ks:navigate', sync);
+  sync();
+
+  // --- Волна AF (фидбек 2026-09-30): отдельная кнопка удаления кейса
+  // с подтверждением (модал вместо штатного «Delete entry…» в меню).
+  // Удаление — POST /api/keystatic/update { deletions: [{path}] }.
+  const delBtn = document.createElement('button');
+  delBtn.className = 'ks-del-btn';
+  delBtn.type = 'button';
+  delBtn.textContent = '🗑 Удалить кейс';
+  delBtn.style.display = 'none';
+
+  const overlay = document.createElement('div');
+  overlay.className = 'ks-modal-overlay';
+  overlay.innerHTML = `
+    <div class="ks-modal" role="dialog" aria-modal="true" aria-labelledby="ks-del-title">
+      <h3 id="ks-del-title">Удалить кейс?</h3>
+      <p>Кейс <b class="ks-del-slug"></b> будет удалён безвозвратно (файл YAML + запись в коллекции). Действие нельзя отменить.</p>
+      <div class="ks-modal-actions">
+        <button type="button" data-act="cancel">Отмена</button>
+        <button type="button" class="ks-danger" data-act="confirm">Удалить</button>
+      </div>
+    </div>
+  `;
+  // Волна AO: кнопка удаления и автообновление превью — только в dev (local-хранилище).
+  // В проде (GitHub-хранилище) удаление — штатное меню «Delete entry…» (коммит в репо).
+  if (import.meta.env.DEV) {
+    document.body.append(delBtn, overlay);
+
+  function currentCaseSlug() {
+    const m = stripBase(location.pathname).match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+
+  function syncDelBtn() {
+    delBtn.style.display = currentCaseSlug() ? '' : 'none';
+  }
+  window.addEventListener('ks:navigate', syncDelBtn);
+  syncDelBtn();
+
+  delBtn.addEventListener('click', () => {
+    overlay.querySelector('.ks-del-slug').textContent = currentCaseSlug() ?? '';
+    overlay.classList.add('is-open');
+  });
+  overlay.querySelector('[data-act="cancel"]').addEventListener('click', () => overlay.classList.remove('is-open'));
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) overlay.classList.remove('is-open'); // клик по фону = отмена
+  });
+  overlay.querySelector('[data-act="confirm"]').addEventListener('click', async () => {
+    const slug = currentCaseSlug();
+    if (!slug) return;
+    const res = await fetch('/api/keystatic/update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'no-cors': '1' },
+      body: JSON.stringify({ additions: [], deletions: [{ path: 'src/content/cases/' + slug + '.yaml' }] }),
+    });
+    if (res.ok) {
+      overlay.classList.remove('is-open');
+      location.href = '/keystatic/collection/cases'; // уходим на список (админка на чистом /keystatic, без base!)
+    } else {
+      alert('Не удалось удалить кейс (HTTP ' + res.status + '). Попробуйте штатное меню «Delete entry…».');
+    }
+  });
+
+  // Автообновление превью после сохранения: Keystatic дергает POST /api/keystatic/update
+  const origFetch = window.fetch.bind(window);
+  window.fetch = (...args) =>
+    origFetch(...args).then((res) => {
+      const url = typeof args[0] === 'string' ? args[0] : args[0]?.url ?? '';
+      if (url.includes('/api/keystatic/update') && res.ok) setTimeout(() => {
+        if (currentUrl && document.body.classList.contains('ks-prev-open')) frame.src = currentUrl;
+        scheduleGalleryThumbs();
+      }, 1200);
+      return res;
+    });
+
+  // --- Волна AS (фидбек 2026-09-30): миниатюры в списке галереи ---
+  // В Keystatic элементы галереи подписаны «Item 1 / Item 2» без превью — непонятно,
+  // что внутри. Читаем YAML кейса через tree+blob API и вставляем миниатюру в каждый row
+  // (DOM-порядок row = порядок массива gallery).
+  let gallerySlug = null;
+  function currentCaseSlugForThumbs() {
+    const m = stripBase(location.pathname).match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
+  }
+  let thumbsBusy = false;
+  async function injectGalleryThumbs() {
+    const grid = [...document.querySelectorAll('[role="grid"]')].find(g => g.getAttribute('aria-label') === 'Галерея');
+    if (!grid) return;
+    const rows = [...grid.querySelectorAll('[role="row"]')];
+    if (!rows.length) return;
+    const slug = currentCaseSlugForThumbs();
+    if (!slug) return;
+    if (thumbsBusy || (slug === gallerySlug && grid.querySelector('img.ks-thumb'))) return;
+    thumbsBusy = true;
+    try {
+      const tree = await origFetch('/api/keystatic/tree', { headers: { 'no-cors': '1' } }).then(r => r.json());
+      const entry = tree.find(t => t.path === 'src/content/cases/' + slug + '.yaml');
+      if (!entry) return;
+      const blob = await origFetch('/api/keystatic/blob/' + entry.sha + '/' + entry.path, { headers: { 'no-cors': '1' } }).then(r => r.text());
+      const paths = [...blob.matchAll(/- (\/\S*images\/cases\/[^\s]+)/g)].map(m => m[1]);
+      rows.forEach((row, i) => {
+        const path = paths[i];
+        if (!path) return;
+        const old = row.querySelector('img.ks-thumb');
+        if (old) { if (old.src.endsWith(path)) return; old.remove(); }
+        const img = document.createElement('img');
+        img.className = 'ks-thumb';
+        img.src = path;
+        img.alt = '';
+        img.style.cssText = 'width:56px;height:42px;object-fit:cover;border-radius:6px;flex:none;box-shadow:0 0 0 1px rgba(128,128,128,.3);';
+        const anchor = row.querySelector('span');
+        if (anchor) anchor.parentNode.insertBefore(img, anchor);
+        else row.prepend(img);
+      });
+      gallerySlug = slug;
+    } finally { thumbsBusy = false; }
+  }
+  let thumbsTimer = null;
+  function scheduleGalleryThumbs() {
+    clearTimeout(thumbsTimer);
+    thumbsTimer = setTimeout(injectGalleryThumbs, 400);
+  }
+  window.addEventListener('ks:navigate', scheduleGalleryThumbs);
+  scheduleGalleryThumbs();
+
+  // --- Волна AT (2026-09-30): кнопки перемещения галереи ↑↓ ---
+  // Обход бага Keystatic 0.6.9: drag&drop визуально двигает элементы, но onChange
+  // не вызывается → Save ничего не сохраняет. Наши кнопки дергают onChange напрямую
+  // (формат как у штатного remove: массив {key} — updateValue сохраняет значения
+  // по ключам) и автосохраняют.
+  function findGalleryList() {
+    const grid = [...document.querySelectorAll('[role="grid"]')].find(g => g.getAttribute('aria-label') === 'Галерея');
+    if (!grid) return null;
+    const fiberKey = Object.keys(grid).find(k => k.startsWith('__reactFiber'));
+    let fiber = grid[fiberKey];
+    for (let i = 0; i < 40 && fiber; i++) {
+      const p = fiber.memoizedProps;
+      if (p && p.elements && fiber.type && fiber.type.name === 'ArrayFieldListView') return p;
+      fiber = fiber.return;
+    }
+    return null;
+  }
+  // Волна AU: onChange не обновляет form state (баг Keystatic 0.6.9) — поэтому
+  // кнопки меняют порядок ПРЯМО в YAML через API update и перезагружают страницу.
+  async function galleryMove(from, to) {
+    const slug = currentCaseSlugForThumbs();
+    if (!slug) return;
+    const tree = await origFetch('/api/keystatic/tree', { headers: { 'no-cors': '1' } }).then(r => r.json());
+    const entry = tree.find(t => t.path === 'src/content/cases/' + slug + '.yaml');
+    if (!entry) return;
+    const yaml = await origFetch('/api/keystatic/blob/' + entry.sha + '/' + entry.path, { headers: { 'no-cors': '1' } }).then(r => r.text());
+    // вырезаем блок gallery (строки «  - путь»)
+    const lines = yaml.split('\n');
+    const gi = lines.findIndex(l => l.startsWith('gallery:'));
+    if (gi === -1) return;
+    const items = [];
+    let end = gi + 1;
+    while (end < lines.length && lines[end].startsWith('  - ')) { items.push(lines[end].slice(4)); end++; }
+    if (from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+    const [moved] = items.splice(from, 1);
+    items.splice(to, 0, moved);
+    const newLines = [...lines.slice(0, gi + 1), ...items.map(x => '  - ' + x), ...lines.slice(end)];
+    const newYaml = newLines.join('\n');
+    const body = {
+      additions: [{ path: entry.path, contents: btoa(unescape(encodeURIComponent(newYaml))) }],
+      deletions: [],
+    };
+    const res = await origFetch('/api/keystatic/update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'no-cors': '1' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      location.reload(); // form state пересоберётся из нового файла
+    } else {
+      alert('Не удалось переместить (HTTP ' + res.status + ')');
+    }
+  }
+  function injectMoveButtons() {
+    if (!currentCaseSlugForThumbs()) return; // только на странице карточки кейса
+    const grid = [...document.querySelectorAll('[role="grid"]')].find(g => g.getAttribute('aria-label') === 'Галерея');
+    if (!grid) return;
+    const rows = [...grid.querySelectorAll('[role="row"]')];
+    rows.forEach((row, i) => {
+      if (row.querySelector('.ks-move-btns')) return;
+      const btns = document.createElement('div');
+      btns.className = 'ks-move-btns';
+      const mk = (label, title, disabled, fn) => {
+        const b = document.createElement('button');
+        b.textContent = label; b.title = title; b.disabled = disabled;
+        b.style.cssText = 'width:22px;height:17px;font-size:11px;line-height:1;padding:0;' +
+          'border:1px solid rgba(128,128,128,.4);border-radius:4px;background:#fff;cursor:pointer;color:#333;';
+        b.onclick = fn;
+        return b;
+      };
+      btns.append(
+        mk('↑', 'Переместить выше', i === 0, () => galleryMove(i, i - 1)),
+        mk('↓', 'Переместить ниже', i === rows.length - 1, () => galleryMove(i, i + 1)),
+      );
+      const all = row.querySelectorAll('button');
+      const last = all[all.length - 1];
+      if (last) last.parentNode.insertBefore(btns, last);
+      else row.append(btns);
+    });
+  }
+  // обёртка над scheduleGalleryThumbs: учитывает pendingSave и кнопки
+  function scheduleGalleryUI() {
+    clearTimeout(thumbsTimer);
+    thumbsTimer = setTimeout(() => {
+      injectGalleryThumbs();
+      injectMoveButtons();
+    }, 400);
+  }
+  // заменяем обработчики: ks:navigate и после Save теперь зовут scheduleGalleryUI
+  window.removeEventListener('ks:navigate', scheduleGalleryThumbs);
+  window.addEventListener('ks:navigate', scheduleGalleryUI);
+  // в fetch-обёртке (выше) после Save вызывается scheduleGalleryThumbs — патчим через
+  // переопределение: проще обернуть саму scheduleGalleryThumbs
+  scheduleGalleryUI();
+  // React перерендеривает список при любом изменении формы — кнопки/миниатюры
+  // пересоздаются. Наблюдаем за DOM и переинжектим (с дебаунсом).
+  const uiObserver = new MutationObserver(() => scheduleGalleryUI());
+  uiObserver.observe(document.body, { childList: true, subtree: true });
+}
+
+}

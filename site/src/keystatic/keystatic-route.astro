@@ -1,0 +1,13 @@
+---
+// Волна AV (2026-09-30): dev-only catch-all для глубоких путей админки
+// (/keystatic/collection/... — чтобы location.reload() после перемещения
+// галереи не падал в 404). Рендерит ту же обёртку, что и статическая
+// страница src/pages/keystatic.astro. В прод не попадает (injectRoute — dev).
+import { Keystatic } from './keystatic-entry.js';
+export const prerender = false;
+---
+
+<Keystatic client:only="react" />
+<script>
+  import '../keystatic/keystatic-enhance.js';
+</script>

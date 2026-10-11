@@ -109,6 +109,13 @@ function keystaticDev() {
             'import "@keystatic/astro/ui";\nimport "@keystatic/core/ui";\n'
           );
           // Страница админки — обычный файл src/pages/keystatic.astro (статика).
+          // В dev дополнительно инжектится catch-all: глубокие пути (/keystatic/collection/...)
+          // должны переживать location.reload() (иначе после перемещения галереи — 404).
+          injectRoute({
+            entrypoint: './src/keystatic/keystatic-route.astro',
+            pattern: '/keystatic/[...params]',
+            prerender: false,
+          });
           // Инжектятся только API-роуты local-хранилища (dev).
           injectRoute({
             entrypoint: 'C:/Yandex.Disk/DesignStudio/site/src/keystatic/keystatic-api.ts',
