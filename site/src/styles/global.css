@@ -120,7 +120,10 @@ a:hover { color: var(--color-accent-strong); }
   }
   html.js .logo.logo-in { opacity: 1; transform: none; }
   html.js .logo:hover .logo-img { opacity: 0.85; }
-} { display: flex; gap: 24px; font-size: 16px; }
+}
+.site-nav { display: flex; align-items: baseline; gap: 20px; font-size: 16px; }
+/* Волна N2: явный разделитель между пунктами навигации */
+.site-nav .nav-sep { color: var(--color-line); user-select: none; }
 html.js .site-nav a { display: inline-block; }
 
 /* Герой: крупная типографика вместо декора (волна V: фон убран — типографика
