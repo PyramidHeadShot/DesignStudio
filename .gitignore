@@ -18,3 +18,7 @@ __pycache__/
 
 # Материалы заказчика (рабочие исходники кейсов, логотип, фон)
 Исходники/
+
+# из комплекта agent-starter-kit
+.pi/subagent-runs/
+.pi/subagents-temp/

@@ -11,7 +11,7 @@ cp -r AGENTS.md .ai .pi .agents /путь/к/проекту/
 ```
 
 - `AGENTS.md` автоматически читается агентами (pi — из коробки; остальные — по конвенции agents.md или через первый промпт «прочитай AGENTS.md»).
-- `.pi/` — опционально, только для pi: субагенты и MCP-серверы. Требует `pi install npm:pi-subagents npm:pi-animations npm:pi-tps-was-taken npm:pi-agent-pulse` (MCP встроен в pi 0.99+); подробности — `.pi/README.md`.
+- `.pi/` — опционально, только для pi: субагенты и MCP-серверы. Требует `pi install npm:pi-subagents npm:pi-animations npm:pi-tps-was-taken` (MCP встроен в pi 0.99+); подробности — `.pi/README.md`.
 - Для ssh/sftp-агентов: скопируй `.env.example` → `.env` и заполни креды (gitignored).
 
 ## Что происходит дальше

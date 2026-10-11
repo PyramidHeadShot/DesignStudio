@@ -39,6 +39,7 @@ pi install npm:pi-subagents     # субагенты (subagent-инструме�
 - Chrome CDP: Chrome должен быть запущен с `--remote-debugging-port=9222` (или агент запустит его сам, если это поддерживает твой сценарий).
 - `exposure: "direct"` объявляет инструменты сервера модели напрямую (замена `directTools: true` из pi-mcp-adapter). Другие режимы: `codemode` (доступны из codemode-скриптов), `deferred` (подгрузка через `tool_search`), `hidden` (модели не видны).
 - `"enabled": false` у сервера держит запись в конфиге без подключения (по умолчанию так отключены ssh/sftp).
+- Проект может переопределить глобальный сервер (pi 1.0.1+): запись в `.pi/mcp.json` БЕЗ `command`/`url` меняет только `enabled`/`exposure`/`toolExposure` сервера из `~/.pi/agent/mcp.json`; `/mcp` умеет включать/выключать сервер для текущего проекта.
 
 ## Субагенты
 

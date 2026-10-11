@@ -327,6 +327,10 @@ html.js .work-filters { visibility: visible; }
   aspect-ratio: 3 / 2;
   object-fit: cover;
 }
+/* Волна AR (фидбек 2026-09-30): промежуток между изображениями (шли впритык):
+   равномерные 24px — между галерейными фото и между обложкой и галереей */
+.case-body img { margin-top: 24px; }
+.case-hero-wrap { margin: 24px 0; }
 
 /* --- Микроанимации (правило 4): только transform/opacity ---
    Кинетический hero и reveal главной ведёт anime.js (index-скрипт);

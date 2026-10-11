@@ -274,8 +274,158 @@ import { Keystatic } from '../keystatic/keystatic-entry.js';
       const url = typeof args[0] === 'string' ? args[0] : args[0]?.url ?? '';
       if (url.includes('/api/keystatic/update') && res.ok) setTimeout(() => {
         if (currentUrl && document.body.classList.contains('ks-prev-open')) frame.src = currentUrl;
+        scheduleGalleryThumbs();
       }, 1200);
       return res;
     });
+
+  // --- Волна AS (фидбек 2026-09-30): миниатюры в списке галереи ---
+  // В Keystatic элементы галереи подписаны «Item 1 / Item 2» без превью — непонятно,
+  // что внутри. Читаем YAML кейса через tree+blob API и вставляем миниатюру в каждый row
+  // (DOM-порядок row = порядок массива gallery).
+  let gallerySlug = null;
+  function currentCaseSlugForThumbs() {
+    const m = stripBase(location.pathname).match(/^\/keystatic\/collection\/cases\/item\/([^/]+)/);
+    return m ? decodeURIComponent(m[1]) : null;
   }
+  let thumbsBusy = false;
+  async function injectGalleryThumbs() {
+    const grid = [...document.querySelectorAll('[role="grid"]')].find(g => g.getAttribute('aria-label') === 'Галерея');
+    if (!grid) return;
+    const rows = [...grid.querySelectorAll('[role="row"]')];
+    if (!rows.length) return;
+    const slug = currentCaseSlugForThumbs();
+    if (!slug) return;
+    if (thumbsBusy || (slug === gallerySlug && grid.querySelector('img.ks-thumb'))) return;
+    thumbsBusy = true;
+    try {
+      const tree = await origFetch('/api/keystatic/tree', { headers: { 'no-cors': '1' } }).then(r => r.json());
+      const entry = tree.find(t => t.path === 'src/content/cases/' + slug + '.yaml');
+      if (!entry) return;
+      const blob = await origFetch('/api/keystatic/blob/' + entry.sha + '/' + entry.path, { headers: { 'no-cors': '1' } }).then(r => r.text());
+      const paths = [...blob.matchAll(/- (\/\S*images\/cases\/[^\s]+)/g)].map(m => m[1]);
+      rows.forEach((row, i) => {
+        const path = paths[i];
+        if (!path) return;
+        const old = row.querySelector('img.ks-thumb');
+        if (old) { if (old.src.endsWith(path)) return; old.remove(); }
+        const img = document.createElement('img');
+        img.className = 'ks-thumb';
+        img.src = path;
+        img.alt = '';
+        img.style.cssText = 'width:56px;height:42px;object-fit:cover;border-radius:6px;flex:none;box-shadow:0 0 0 1px rgba(128,128,128,.3);';
+        const anchor = row.querySelector('span');
+        if (anchor) anchor.parentNode.insertBefore(img, anchor);
+        else row.prepend(img);
+      });
+      gallerySlug = slug;
+    } finally { thumbsBusy = false; }
+  }
+  let thumbsTimer = null;
+  function scheduleGalleryThumbs() {
+    clearTimeout(thumbsTimer);
+    thumbsTimer = setTimeout(injectGalleryThumbs, 400);
+  }
+  window.addEventListener('ks:navigate', scheduleGalleryThumbs);
+  scheduleGalleryThumbs();
+
+  // --- Волна AT (2026-09-30): кнопки перемещения галереи ↑↓ ---
+  // Обход бага Keystatic 0.6.9: drag&drop визуально двигает элементы, но onChange
+  // не вызывается → Save ничего не сохраняет. Наши кнопки дергают onChange напрямую
+  // (формат как у штатного remove: массив {key} — updateValue сохраняет значения
+  // по ключам) и автосохраняют.
+  function findGalleryList() {
+    const grid = [...document.querySelectorAll('[role="grid"]')].find(g => g.getAttribute('aria-label') === 'Галерея');
+    if (!grid) return null;
+    const fiberKey = Object.keys(grid).find(k => k.startsWith('__reactFiber'));
+    let fiber = grid[fiberKey];
+    for (let i = 0; i < 40 && fiber; i++) {
+      const p = fiber.memoizedProps;
+      if (p && p.elements && fiber.type && fiber.type.name === 'ArrayFieldListView') return p;
+      fiber = fiber.return;
+    }
+    return null;
+  }
+  // Волна AU: onChange не обновляет form state (баг Keystatic 0.6.9) — поэтому
+  // кнопки меняют порядок ПРЯМО в YAML через API update и перезагружают страницу.
+  async function galleryMove(from, to) {
+    const slug = currentCaseSlugForThumbs();
+    if (!slug) return;
+    const tree = await origFetch('/api/keystatic/tree', { headers: { 'no-cors': '1' } }).then(r => r.json());
+    const entry = tree.find(t => t.path === 'src/content/cases/' + slug + '.yaml');
+    if (!entry) return;
+    const yaml = await origFetch('/api/keystatic/blob/' + entry.sha + '/' + entry.path, { headers: { 'no-cors': '1' } }).then(r => r.text());
+    // вырезаем блок gallery (строки «  - путь»)
+    const lines = yaml.split('\n');
+    const gi = lines.findIndex(l => l.startsWith('gallery:'));
+    if (gi === -1) return;
+    const items = [];
+    let end = gi + 1;
+    while (end < lines.length && lines[end].startsWith('  - ')) { items.push(lines[end].slice(4)); end++; }
+    if (from < 0 || to < 0 || from >= items.length || to >= items.length) return;
+    const [moved] = items.splice(from, 1);
+    items.splice(to, 0, moved);
+    const newLines = [...lines.slice(0, gi + 1), ...items.map(x => '  - ' + x), ...lines.slice(end)];
+    const newYaml = newLines.join('\n');
+    const body = {
+      additions: [{ path: entry.path, contents: btoa(unescape(encodeURIComponent(newYaml))) }],
+      deletions: [],
+    };
+    const res = await origFetch('/api/keystatic/update', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'no-cors': '1' },
+      body: JSON.stringify(body),
+    });
+    if (res.ok) {
+      location.reload(); // form state пересоберётся из нового файла
+    } else {
+      alert('Не удалось переместить (HTTP ' + res.status + ')');
+    }
+  }
+  function injectMoveButtons() {
+    if (!currentCaseSlugForThumbs()) return; // только на странице карточки кейса
+    const grid = [...document.querySelectorAll('[role="grid"]')].find(g => g.getAttribute('aria-label') === 'Галерея');
+    if (!grid) return;
+    const rows = [...grid.querySelectorAll('[role="row"]')];
+    rows.forEach((row, i) => {
+      if (row.querySelector('.ks-move-btns')) return;
+      const btns = document.createElement('div');
+      btns.className = 'ks-move-btns';
+      const mk = (label, title, disabled, fn) => {
+        const b = document.createElement('button');
+        b.textContent = label; b.title = title; b.disabled = disabled;
+        b.style.cssText = 'width:22px;height:17px;font-size:11px;line-height:1;padding:0;' +
+          'border:1px solid rgba(128,128,128,.4);border-radius:4px;background:#fff;cursor:pointer;color:#333;';
+        b.onclick = fn;
+        return b;
+      };
+      btns.append(
+        mk('↑', 'Переместить выше', i === 0, () => galleryMove(i, i - 1)),
+        mk('↓', 'Переместить ниже', i === rows.length - 1, () => galleryMove(i, i + 1)),
+      );
+      const all = row.querySelectorAll('button');
+      const last = all[all.length - 1];
+      if (last) last.parentNode.insertBefore(btns, last);
+      else row.append(btns);
+    });
+  }
+  // обёртка над scheduleGalleryThumbs: учитывает pendingSave и кнопки
+  function scheduleGalleryUI() {
+    clearTimeout(thumbsTimer);
+    thumbsTimer = setTimeout(() => {
+      injectGalleryThumbs();
+      injectMoveButtons();
+    }, 400);
+  }
+  // заменяем обработчики: ks:navigate и после Save теперь зовут scheduleGalleryUI
+  window.removeEventListener('ks:navigate', scheduleGalleryThumbs);
+  window.addEventListener('ks:navigate', scheduleGalleryUI);
+  // в fetch-обёртке (выше) после Save вызывается scheduleGalleryThumbs — патчим через
+  // переопределение: проще обернуть саму scheduleGalleryThumbs
+  scheduleGalleryUI();
+  // React перерендеривает список при любом изменении формы — кнопки/миниатюры
+  // пересоздаются. Наблюдаем за DOM и переинжектим (с дебаунсом).
+  const uiObserver = new MutationObserver(() => scheduleGalleryUI());
+  uiObserver.observe(document.body, { childList: true, subtree: true });
+}
 </script>

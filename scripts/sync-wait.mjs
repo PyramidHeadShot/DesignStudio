@@ -20,7 +20,7 @@ const timeoutSec = Number(args.find(a => a.startsWith('--timeout'))?.split('=')[
 const intervalSec = Number(args.find(a => a.startsWith('--interval'))?.split('=')[1] || 15);
 const PC_BASE = process.env.PC_KIT_DIR || 'C:\\Yandex.Disk\\Computer_Vision\\agent-starter-kit';
 
-if (!rel) { console.error('укажи относительный путь: node scripts/sync-wait.mjs scripts/setup-pulse-task.ps1'); process.exit(1); }
+if (!rel) { console.error('укажи относительный путь: node scripts/sync-wait.mjs scripts/wol.mjs'); process.exit(1); }
 
 const localPath = path.resolve(rel);
 if (!fs.existsSync(localPath)) { console.error('локальный файл не найден: ' + localPath); process.exit(1); }
