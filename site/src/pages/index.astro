@@ -128,13 +128,29 @@ const ICONS: Record<string, string> = {
 
     // Волна N: вся инициализация — в boot(); модуль исполняется один раз.
     // Первый показ главной обслуживает верхний boot(), повторные приходы —
-    // astro:page-load (маркер data-mboot на <main>; после свапа main новый).
-    // Уход с главной: astro:before-swap сносит scope (твины не тикают в пустоту).
-    document.documentElement.classList.add('js');
+    // astro:page-load (маркер data-mboot на <main>; после свапа main новый);
+    // назад из кейса — boot(true): только интерактив, без скрытия карточек
+    // (см. wasPopstate). Уход с главной: astro:before-swap сносит scope.
+    // Волна N-fix: при ВОЗВРАТЕ назад по history (popstate) хореографическое
+    // «появление» не проигрываем: браузер восстанавливает скролл мгновенно,
+    // а стартовые opacity:0 у карточек надолго оставляют нижнюю часть сетки
+    // пустой/«обрезанной», пока лениво догружаются img и опаздывают IO.
+    // Без JS страница всегда видима — так же себя ведём и здесь.
+    // ВАЖНО: performance navigation type НЕ годится — при SPA-возврате он
+    // остаётся 'navigate'. Реальный признак возврата — astro:before-preparation
+    // с navigationType === 'traverse' (назад/вперёд по истории; проверено:
+    // Astro ClientRouter шлёт 'push'/'replace'/'traverse', НЕ 'popstate').
+    let wasPopstate = false;
+    document.addEventListener('astro:before-preparation', (e) => {
+      wasPopstate = (e as { navigationType?: string }).navigationType === 'traverse';
+    });
 
     let scope: ReturnType<typeof createScope> | null = null;
 
-    function boot() {
+    function boot(skipIntro = false) {
+      // класс js нужно ставить при КАЖДОМ boot: Astro-свап перезаписывает
+      // html-атрибуты, и после возврата на главную класс пропадает
+      document.documentElement.classList.add('js');
     const cards = [...document.querySelectorAll<HTMLElement>('.work-card')];
     const filterBtns = [...document.querySelectorAll<HTMLButtonElement>('.work-filter')];
     const filtersRow = document.querySelector<HTMLElement>('.work-filters');
@@ -151,7 +167,7 @@ const ICONS: Record<string, string> = {
       const sub = document.querySelector<HTMLElement>('.hero p');
       let words: HTMLElement[] = [];
 
-      if (!frozen()) {
+      if (!frozen() && !skipIntro) {
         // стартовые состояния — только из JS (без JS всё видно)
         // Волна S: слова уже в HTML-масках (без splitWords — DOM стабилен)
         if (h1) words = [...document.querySelectorAll<HTMLElement>('.hero h1 .wi')];
@@ -376,7 +392,8 @@ const ICONS: Record<string, string> = {
       const main = document.querySelector('main');
       if (main?.hasAttribute('data-mboot')) return; // этот экземпляр уже поднят верхним boot()
       scope?.revert();
-      boot();
+      boot(wasPopstate);
+      wasPopstate = false;
       main?.setAttribute('data-mboot', '1');
     });
 
